@@ -3,7 +3,7 @@ module.exports = {
   // 查询部门列表
   queryMembeResponse: {
     code: { type: "number", required: true, default: 200 },
-    data: { type: "array", itemType: "member" },
+    data: { type: "pageList", required: true },
     msg: { type: "string", required: true, default: "请求成功" },
   },
   // 查询单个成员
@@ -16,6 +16,18 @@ module.exports = {
     code: { type: "number", required: true, default: 200 },
     data: { type: "file", required: true },
     msg: { type: "string", required: true, default: "请求成功" },
+  },
+  // 分页
+  pageList: {
+    list: {
+      type: "array",
+      itemType: "member",
+    },
+    total: {
+      type: "number",
+      required: true,
+      default: 0,
+    },
   },
   member: {
     memberId: {
@@ -37,6 +49,12 @@ module.exports = {
       format: /^1[34578]\d{9}$/,
       required: true,
       description: "手机号",
+      trim: true,
+    },
+    inductionDate: {
+      type: "string",
+      required: true,
+      description: "入职时间",
       trim: true,
     },
     email: {

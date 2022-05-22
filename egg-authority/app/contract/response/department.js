@@ -18,5 +18,10 @@ module.exports = {
       type: "string",
       description: "部门名字",
     },
+    children: {
+      type: "array",
+      itemType: "departmentItem",
+      description: "子部门",
+    },
   },
 };

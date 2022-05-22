@@ -2,9 +2,8 @@
 module.exports = {
   // 删除部门
   deleteDepartmentRequest: {
-    ids: {
-      type: "array",
-      itemType: "string",
+    id: {
+      type: "string",
       required: true,
       description: "部门id列表",
     },
