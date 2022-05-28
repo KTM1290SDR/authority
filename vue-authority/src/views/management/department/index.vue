@@ -6,35 +6,34 @@
           <el-form :inline="true" :model="screenForm" size="medium ">
             <el-form-item label="姓名：">
               <el-input
-                maxlength="20"
                 v-model="screenForm.memberName"
+                maxlength="20"
                 placeholder="请输入姓名"
-              ></el-input>
+              />
             </el-form-item>
             <transition-group name="el-fade-in-linear">
               <template v-if="isExtendScreen">
-                <el-form-item label="入职日期：" key="inductionDate">
+                <el-form-item key="inductionDate" label="入职日期：">
                   <el-date-picker
                     v-model="screenForm.inductionDate"
                     type="daterange"
                     start-placeholder="开始日期"
                     end-placeholder="结束日期"
-                  >
-                  </el-date-picker>
+                  />
                 </el-form-item>
-                <el-form-item label="手机：" key="phoneNumber">
+                <el-form-item key="phoneNumber" label="手机：">
                   <el-input
-                    maxlength="20"
                     v-model="screenForm.phoneNumber"
+                    maxlength="20"
                     placeholder="请输入手机号"
-                  ></el-input>
+                  />
                 </el-form-item>
-                <el-form-item label="邮箱：" key="email">
+                <el-form-item key="email" label="邮箱：">
                   <el-input
-                    maxlength="30"
                     v-model="screenForm.email"
+                    maxlength="30"
                     placeholder="请输入邮箱"
-                  ></el-input>
+                  />
                 </el-form-item>
               </template>
             </transition-group>
@@ -45,22 +44,22 @@
               <el-button plain @click="onReset">重置</el-button>
             </el-form-item>
 
-            <el-form-item
-              ><el-button
-                @click="isExtendScreen = !isExtendScreen"
-                type="primary"
-                :icon="
-                  isExtendScreen ? 'el-icon-remove' : 'el-icon-circle-plus'
-                "
-              ></el-button
-            ></el-form-item>
+            <el-form-item><el-button
+              type="primary"
+              :icon="
+                isExtendScreen ? 'el-icon-remove' : 'el-icon-circle-plus'
+              "
+              @click="isExtendScreen = !isExtendScreen"
+            /></el-form-item>
           </el-form>
         </div>
         <div class="btn-group">
           <div class="btn-box">
-            <el-button size="small" type="primary" @click="addMemberOpen"
-              >新增成员</el-button
-            >
+            <el-button
+              size="small"
+              type="primary"
+              @click="addMemberOpen"
+            >新增成员</el-button>
           </div>
           <div class="count-box">
             <el-tag effect="dark" type="success">
@@ -72,16 +71,16 @@
                 type="primary"
                 :disabled="selectionMember.length === 0"
               >
-                批量操作<i class="el-icon-arrow-down el-icon--right"></i>
+                批量操作<i class="el-icon-arrow-down el-icon--right" />
               </el-button>
               <el-dropdown-menu slot="dropdown">
                 <el-dropdown-item command="del">删除</el-dropdown-item>
-                <el-dropdown-item command="changeState"
-                  >更改状态</el-dropdown-item
-                >
-                <el-dropdown-item command="changeDepart"
-                  >更改组织架构</el-dropdown-item
-                >
+                <el-dropdown-item
+                  command="changeState"
+                >更改状态</el-dropdown-item>
+                <el-dropdown-item
+                  command="changeDepart"
+                >更改组织架构</el-dropdown-item>
               </el-dropdown-menu>
             </el-dropdown>
           </div>
@@ -118,57 +117,55 @@
                     :value="scope.row.enable"
                     active-color="#13ce66"
                     inactive-color="#ff4949"
-                  >
-                  </el-switch>
+                  />
                 </span>
               </template>
             </el-table-column>
             <el-table-column label="操作" fixed="right" width="150">
               <template slot-scope="scope">
-                <el-button size="mini" @click="handleMemberEdit(scope.row)"
-                  >编辑</el-button
-                >
+                <el-button
+                  size="mini"
+                  @click="handleMemberEdit(scope.row)"
+                >编辑</el-button>
                 <el-button
                   size="mini"
                   type="danger"
                   @click="handleMemberDelete(scope.row)"
-                  >删除</el-button
-                >
+                >删除</el-button>
               </template>
             </el-table-column>
           </el-table>
         </div>
         <div class="page-box">
           <el-pagination
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
             background
             :current-page.sync="page.currentPage"
             :page-sizes="[10, 20, 50, 100]"
             :page-size.sync="page.pageSize"
             layout="sizes, prev, pager, next, jumper"
             :total="total"
-          >
-          </el-pagination>
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+          />
         </div>
       </div>
       <div class="member-group group-box">
         <h4>成员分组</h4>
         <ul>
           <li
-            :class="{ selected: group.memberGroup === item.value }"
             v-for="item in memberGroup"
             :key="item.value"
+            :class="{ selected: group.memberGroup === item.value }"
             @click="selectMemberGroupHander(item)"
           >
-            <i :class="item.icon"></i>
+            <i :class="item.icon" />
             <span>{{ item.label }}</span>
           </li>
           <li
             v-if="group.memberGroup !== ''"
             class="cursor"
             :style="{ top: `${40 * memberGroupIndex}px` }"
-          ></li>
+          />
         </ul>
       </div>
       <div class="organization-tree group-box">
@@ -187,12 +184,12 @@
             :expand-on-click-node="false"
           >
             <div
+              slot-scope="{ node, data }"
               :class="[
                 'custom-tree-node',
                 { 'cur-department': data.id === group.department },
               ]"
               @click="selectCurDepartment(data.id)"
-              slot-scope="{ node, data }"
             >
               <span>{{ node.label }}</span>
               <span>
@@ -229,16 +226,18 @@
       <el-form ref="enableBatchForm" :model="enableBatchForm" size="small">
         <el-form-item label="启用状态：" prop="enable">
           <el-switch
+            v-model="enableBatchForm.enable"
             active-color="#13ce66"
             inactive-color="#ff4949"
-            v-model="enableBatchForm.enable"
-          ></el-switch>
+          />
         </el-form-item>
       </el-form>
       <div slot="footer">
-        <el-button type="primary" size="mini" @click="batchUpdateMemberState"
-          >保存</el-button
-        >
+        <el-button
+          type="primary"
+          size="mini"
+          @click="batchUpdateMemberState"
+        >保存</el-button>
       </div>
     </el-dialog>
     <el-dialog
@@ -266,15 +265,16 @@
             }"
             clearable
             placeholder="请选择部门"
-          ></el-cascader>
+          />
         </el-form-item>
       </el-form>
       <div slot="footer">
-        <el-button type="primary" size="mini" @click="updateMemberDepartment"
-          >保存</el-button
-        >
-      </div></el-dialog
-    >
+        <el-button
+          type="primary"
+          size="mini"
+          @click="updateMemberDepartment"
+        >保存</el-button>
+      </div></el-dialog>
     <el-dialog
       width="660px"
       custom-class="common-dialog add-member-dialog"
@@ -301,24 +301,24 @@
         <template v-if="addMemberMode === 1">
           <el-form-item label="姓名：" prop="memberName">
             <el-input
-              maxlength="20"
               v-model="addMemberForm.memberName"
+              maxlength="20"
               placeholder="请输入姓名"
-            ></el-input>
+            />
           </el-form-item>
           <el-form-item label="手机：" prop="phoneNumber">
             <el-input
-              maxlength="20"
               v-model="addMemberForm.phoneNumber"
+              maxlength="20"
               placeholder="请输入手机号"
-            ></el-input>
+            />
           </el-form-item>
           <el-form-item label="邮箱：" prop="email">
             <el-input
-              maxlength="30"
               v-model="addMemberForm.email"
+              maxlength="30"
               placeholder="请输入邮箱"
-            ></el-input>
+            />
           </el-form-item>
           <el-form-item label="部门：" prop="department">
             <el-cascader
@@ -332,7 +332,7 @@
               }"
               clearable
               placeholder="请选择部门"
-            ></el-cascader>
+            />
           </el-form-item>
         </template>
         <template v-else>
@@ -342,15 +342,16 @@
               :show-file-list="false"
             >
               <el-input
-                disabled
                 slot="trigger"
-                placeholder="请选取文件"
                 v-model="screenForm.memberExcelNmae"
+                disabled
+                placeholder="请选取文件"
               >
-                <el-button slot="append" size="small" type="primary"
-                  >选取文件</el-button
-                ></el-input
-              >
+                <el-button
+                  slot="append"
+                  size="small"
+                  type="primary"
+                >选取文件</el-button></el-input>
 
               <div slot="tip" class="el-upload__tip">
                 只能上传xlsx/xls文件，且不超过3mb
@@ -361,9 +362,11 @@
         </template>
       </el-form>
       <div slot="footer">
-        <el-button type="primary" size="mini" @click="addMember"
-          >提交</el-button
-        >
+        <el-button
+          type="primary"
+          size="mini"
+          @click="addMember"
+        >提交</el-button>
       </div>
     </el-dialog>
     <add-department ref="addDepartment" />
@@ -375,37 +378,16 @@ import {
   delMember,
   updateMemberState,
   updateMemberDepartment,
-  addMember,
-} from "@/api/member";
-import { getDepartmentList, delDepartment } from "@/api/management";
-import lodash from "lodash";
-import AddDepartment from "@/views/management/department/components/AddDepartment";
+  addMember
+} from '@/api/member'
+import { getDepartmentList, delDepartment } from '@/api/management'
+import lodash from 'lodash'
+import AddDepartment from '@/views/management/department/components/AddDepartment'
 
 export default {
-  name: "department",
+  name: 'Department',
   components: {
-    AddDepartment,
-  },
-  computed: {
-    // 当前选择的部门或者分组
-    curMemberGroup() {
-      let memberGroup, department;
-      if (!this.group.department) {
-        memberGroup = this.memberGroup.find(
-          (item) => item.value === this.group.memberGroup
-        ).label;
-      }
-      if (!memberGroup) {
-        department = this.$refs.departmentTree.getNode(this.group.department)
-          .data.departmentName;
-      }
-      return memberGroup || department;
-    },
-    memberGroupIndex() {
-      return this.memberGroup.findIndex(
-        (item) => item.value === this.group.memberGroup
-      );
-    },
+    AddDepartment
   },
   data() {
     return {
@@ -419,37 +401,37 @@ export default {
       tableData: [],
       // 批量启用状态表单
       enableBatchForm: {
-        enable: true,
+        enable: true
       },
       // 批量变更部门表单
       changeOrganForm: {
-        department: "",
+        department: ''
       },
       // 新增成员表单
       addMemberForm: {
         // 姓名
-        memberName: "",
+        memberName: '',
         // 手机号
-        phoneNumber: "",
+        phoneNumber: '',
         // 邮箱
-        email: "",
+        email: '',
         // 部门
-        department: "",
-        memberExcelNmae: "",
+        department: '',
+        memberExcelNmae: ''
       },
       isExtendScreen: false,
       // 已选组
       group: {
         memberGroup: 1,
-        department: "",
+        department: ''
       },
       // 成员录入模式
       addMemberMode: 1,
       memberGroup: [
-        { label: "所有成员", value: 1, icon: "el-icon-success" },
-        { label: "新加入成员", value: 2, icon: "el-icon-circle-plus" },
-        { label: "未分配部门成员", value: 3, icon: "el-icon-warning" },
-        { label: "停用成员", value: 4, icon: "el-icon-error" },
+        { label: '所有成员', value: 1, icon: 'el-icon-success' },
+        { label: '新加入成员', value: 2, icon: 'el-icon-circle-plus' },
+        { label: '未分配部门成员', value: 3, icon: 'el-icon-warning' },
+        { label: '停用成员', value: 4, icon: 'el-icon-error' }
       ],
       // 已选成员
       selectionMember: [],
@@ -457,29 +439,50 @@ export default {
       organizationTree: [],
       // 筛选输入的
       screenForm: {
-        memberName: "",
-        phoneNumber: "",
-        inductionDate: "",
-        email: "",
+        memberName: '',
+        phoneNumber: '',
+        inductionDate: '',
+        email: ''
       },
       // 筛选提交的的
       screenFormPost: {},
       page: {
         currentPage: 1,
-        pageSize: 10,
+        pageSize: 10
       },
       total: 0,
-      //校验规则
+      // 校验规则
       rules: {
-        memberName: [{ required: true, message: "请输入姓名" }],
-        phoneNumber: [{ required: true, message: "请输入手机号" }],
-        email: [{ required: true, message: "请输入邮箱" }],
-        department: [{ required: true, message: "请选择部门" }],
-      },
-    };
+        memberName: [{ required: true, message: '请输入姓名' }],
+        phoneNumber: [{ required: true, message: '请输入手机号' }],
+        email: [{ required: true, message: '请输入邮箱' }],
+        department: [{ required: true, message: '请选择部门' }]
+      }
+    }
+  },
+  computed: {
+    // 当前选择的部门或者分组
+    curMemberGroup() {
+      let memberGroup, department
+      if (!this.group.department) {
+        memberGroup = this.memberGroup.find(
+          (item) => item.value === this.group.memberGroup
+        ).label
+      }
+      if (!memberGroup) {
+        department = this.$refs.departmentTree.getNode(this.group.department)
+          .data.departmentName
+      }
+      return memberGroup || department
+    },
+    memberGroupIndex() {
+      return this.memberGroup.findIndex(
+        (item) => item.value === this.group.memberGroup
+      )
+    }
   },
   mounted() {
-    this.getDepartmentList().then(this.getMemberList);
+    this.getDepartmentList().then(this.getMemberList)
   },
   methods: {
     // 查询成员列表
@@ -487,76 +490,76 @@ export default {
       getMemberList({
         ...this.screenFormPost,
         ...this.page,
-        ...this.group,
+        ...this.group
       }).then((res) => {
-        this.tableData = res.data.list;
-        this.total = res.data.total;
-      });
+        this.tableData = res.data.list
+        this.total = res.data.total
+      })
     },
     // 获取部门树
     getDepartmentList() {
       return getDepartmentList().then((res) => {
-        this.organizationTree = res.data;
-      });
+        this.organizationTree = res.data
+      })
     },
     // 计算index
     indexMethod(index) {
-      let { currentPage, pageSize } = this.page;
-      return (currentPage - 1) * pageSize + index + 1;
+      const { currentPage, pageSize } = this.page
+      return (currentPage - 1) * pageSize + index + 1
     },
     // 改变最大条数触发
     handleSizeChange() {
-      this.getMemberList();
+      this.getMemberList()
     },
     // 改变当前页触发
     handleCurrentChange() {
-      this.getMemberList();
+      this.getMemberList()
     },
     // 变更成员状态
     updateMemberState(item) {
-      console.log(item);
+      console.log(item)
       updateMemberState({ state: !item.enable, ids: [item.memberId] }).then(
         (res) => {
           this.$message({
-            type: "success",
-            message: `状态变更成功！`,
-          });
-          this.getMemberList();
+            type: 'success',
+            message: `状态变更成功！`
+          })
+          this.getMemberList()
         }
-      );
+      )
     },
 
     // 批量更改状态
     batchUpdateMemberState() {
       updateMemberState({
         state: this.enableBatchForm.enable,
-        ids: this.selectionMember.map((item) => item.memberId),
+        ids: this.selectionMember.map((item) => item.memberId)
       }).then((res) => {
         this.$message({
-          type: "success",
-          message: `状态变更成功！`,
-        });
-        this.getMemberList();
-        this.enableDialogCloseHander();
-      });
+          type: 'success',
+          message: `状态变更成功！`
+        })
+        this.getMemberList()
+        this.enableDialogCloseHander()
+      })
     },
     // 关闭批量设置状态
     enableDialogCloseHander() {
-      this.enableBatchForm = this.$options.data().enableBatchForm;
-      this.$refs.enableBatchForm.resetFields();
-      this.enableDialogVisible = false;
+      this.enableBatchForm = this.$options.data().enableBatchForm
+      this.$refs.enableBatchForm.resetFields()
+      this.enableDialogVisible = false
     },
     // 关闭新增
     addMemberCloseHander() {
-      this.addMemberForm = this.$options.data().addMemberForm;
-      this.$refs.addMemberForm.resetFields();
-      this.addMemberDialogVisible = false;
+      this.addMemberForm = this.$options.data().addMemberForm
+      this.$refs.addMemberForm.resetFields()
+      this.addMemberDialogVisible = false
     },
     // 关闭批量更改部门弹窗
     changeOrganDialogClosehander() {
-      this.changeOrganForm = this.$options.data().changeOrganForm;
-      this.$refs.changeOrganForm.resetFields();
-      this.changeOrganDialogVisible = false;
+      this.changeOrganForm = this.$options.data().changeOrganForm
+      this.$refs.changeOrganForm.resetFields()
+      this.changeOrganDialogVisible = false
     },
     // 新增成员
     addMember() {
@@ -564,14 +567,14 @@ export default {
         if (valid) {
           addMember({ ...this.addMemberForm }).then((res) => {
             this.$message({
-              type: "success",
-              message: `新增成员成功！`,
-            });
-            this.addMemberCloseHander();
-            this.getMemberList();
-          });
+              type: 'success',
+              message: `新增成员成功！`
+            })
+            this.addMemberCloseHander()
+            this.getMemberList()
+          })
         }
-      });
+      })
     },
     // 批量更改部门
     updateMemberDepartment() {
@@ -579,119 +582,119 @@ export default {
         if (valid) {
           updateMemberDepartment({
             membeIds: this.selectionMember.map((item) => item.memberId),
-            departId: this.changeOrganForm.department,
+            departId: this.changeOrganForm.department
           }).then((res) => {
             this.$message({
-              type: "success",
-              message: `批量变更部门成功！`,
-            });
-            this.changeOrganDialogClosehander();
-            this.getMemberList();
-          });
+              type: 'success',
+              message: `批量变更部门成功！`
+            })
+            this.changeOrganDialogClosehander()
+            this.getMemberList()
+          })
         }
-      });
+      })
     },
     // 查询
     onScreen() {
-      this.screenFormPost = lodash.cloneDeep(this.screenForm);
-      this.getMemberList();
+      this.screenFormPost = lodash.cloneDeep(this.screenForm)
+      this.getMemberList()
     },
     // 重置
     onReset() {
-      this.screenForm = this.$options.data().screenForm;
-      this.screenFormPost = this.$options.data().screenFormPost;
-      this.getMemberList();
+      this.screenForm = this.$options.data().screenForm
+      this.screenFormPost = this.$options.data().screenFormPost
+      this.getMemberList()
     },
     // 增加组织架构
     appendOrganizationHander(node, data) {
-      this.$refs.addDepartment.init({ targetId: data.id });
+      this.$refs.addDepartment.init({ targetId: data.id })
     },
     // 删除组织架构
     removeOrganizationHander(node, data) {
       this.$confirm(
-        "是否删除该部门，删除该部门后其子部门也会被删除！",
-        "删除部门"
+        '是否删除该部门，删除该部门后其子部门也会被删除！',
+        '删除部门'
       )
         .then((action) => {
           delDepartment({ id: data.id }).then((res) => {
             this.$message({
-              type: "success",
-              message: `删除成功！`,
-            });
-          });
+              type: 'success',
+              message: `删除成功！`
+            })
+          })
         })
-        .catch(() => {});
+        .catch(() => {})
     },
 
     // 表格多选触发
     handleSelectionChange(selection) {
-      this.selectionMember = selection;
+      this.selectionMember = selection
     },
     // 新增成员
     addMemberOpen() {
-      this.addMemberDialogVisible = true;
+      this.addMemberDialogVisible = true
     },
     // 编辑成员
     handleMemberEdit() {},
     // 删除成员
     handleMemberDelete(item) {
-      this.$confirm("是否删除该成员！", "删除成员")
+      this.$confirm('是否删除该成员！', '删除成员')
         .then((action) => {
           delMember({ ids: [item.memberId] }).then((res) => {
             this.$message({
-              type: "success",
-              message: `删除成功！`,
-            });
-          });
+              type: 'success',
+              message: `删除成功！`
+            })
+          })
         })
-        .catch(() => {});
+        .catch(() => {})
     },
     // 选择成员分组
     selectMemberGroupHander(item) {
       this.group = {
         memberGroup: item.value,
-        department: "",
-      };
-      this.getMemberList();
+        department: ''
+      }
+      this.getMemberList()
     },
     // 选择当前部门
     selectCurDepartment(id) {
       this.group = {
-        memberGroup: "",
-        department: id,
-      };
-      this.getMemberList();
+        memberGroup: '',
+        department: id
+      }
+      this.getMemberList()
     },
     // 批量操作菜单
     handleCommand(command) {
       switch (command) {
-        case "del":
-          this.$confirm("是否删除已选成员！", "批量删除成员")
+        case 'del':
+          this.$confirm('是否删除已选成员！', '批量删除成员')
             .then((action) => {
               delMember({
-                ids: this.selectionMember.map((item) => item.memberId),
+                ids: this.selectionMember.map((item) => item.memberId)
               }).then((res) => {
                 this.$message({
-                  type: "success",
-                  message: `删除成功！`,
-                });
-                this.getMemberList();
-              });
+                  type: 'success',
+                  message: `删除成功！`
+                })
+                this.getMemberList()
+              })
             })
-            .catch(() => {});
-          break;
-        case "changeState":
-          this.enableDialogVisible = true;
-          break;
-        case "changeDepart":
-          this.changeOrganDialogVisible = true;
-          break;
+            .catch(() => {})
+          break
+        case 'changeState':
+          this.enableDialogVisible = true
+          break
+        case 'changeDepart':
+          this.changeOrganDialogVisible = true
+          break
         default:
-          break;
+          break
       }
-    },
-  },
-};
+    }
+  }
+}
 </script>
 <style lang="scss">
 .department {

@@ -1,18 +1,18 @@
 "use strict";
 module.exports = {
   // 查询部门列表
-  queryMembeResponse: {
+  queryMemberResponse: {
     code: { type: "number", required: true, default: 200 },
     data: { type: "pageList", required: true },
     msg: { type: "string", required: true, default: "请求成功" },
   },
   // 查询单个成员
-  queryMembeItemResponse: {
+  queryMemberItemResponse: {
     code: { type: "number", required: true, default: 200 },
     data: { type: "member", required: true },
     msg: { type: "string", required: true, default: "请求成功" },
   },
-  importMembeItemResponse: {
+  importMemberItemResponse: {
     code: { type: "number", required: true, default: 200 },
     data: { type: "file", required: true },
     msg: { type: "string", required: true, default: "请求成功" },

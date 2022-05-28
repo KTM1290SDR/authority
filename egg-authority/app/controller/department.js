@@ -11,6 +11,8 @@ class DepartmentController extends Controller {
    */
   async query() {
     const { ctx } = this;
+    const res = await ctx.service.department.query();
+    ctx.helper.body.SUCCESS({ ctx, res });
   }
   /**
    * @summary 新增部门
@@ -22,6 +24,26 @@ class DepartmentController extends Controller {
   async add() {
     const { ctx } = this;
     ctx.validate(ctx.rule.createDepartmentRequest, ctx.request.body);
+    const res = await ctx.service.department.create(ctx.request.body);
+    console.log("resresresres", res);
+    if (!res.__code_wrong) {
+      res
+        ? ctx.helper.body.CREATED_UPDATE({ ctx })
+        : ctx.helper.body.INVALID_REQUEST({ ctx });
+    } else {
+      switch (res.__code_wrong) {
+        case 40000:
+          ctx.helper.body.INVALID_REQUEST({
+            ctx,
+            code: res.__code_wrong,
+            msg: "不存在父部门！",
+          });
+          break;
+        default:
+          ctx.helper.body.INVALID_REQUEST({ ctx });
+          break;
+      }
+    }
   }
   /**
    * @summary 删除部门

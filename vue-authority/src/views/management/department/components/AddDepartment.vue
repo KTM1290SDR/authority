@@ -7,9 +7,9 @@
     :before-close="closeHander"
   >
     <el-form
+      ref="addFrom"
       label-position="right"
       label-width="100px"
-      ref="addFrom"
       :model="addFrom"
       size="small"
       :rules="rules"
@@ -19,8 +19,7 @@
           v-model="addFrom.departmentName"
           placeholder="请输入部门名称"
           maxlength="20"
-        >
-        </el-input>
+        />
       </el-form-item>
     </el-form>
     <span slot="footer" class="dialog-footer">
@@ -35,7 +34,7 @@
 import { addDepartment } from "@/api/management";
 
 export default {
-  name: "addDepartment",
+  name: "AddDepartment",
   data() {
     return {
       // 父部门id

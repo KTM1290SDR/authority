@@ -15,7 +15,7 @@ class MemberController extends Controller {
    * @request query string email 邮箱
    * @request query number *currentPage 当前页
    * @request query number *pageSize 当前页条数
-   * @response 200 queryMembeResponse 查询成功
+   * @response 200 queryMemberResponse 查询成功
    */
   query() {
     const { ctx } = this;
@@ -25,7 +25,7 @@ class MemberController extends Controller {
    * @summary 查询单个成员
    * @router get /api/member/queryItem
    * @request query number *id 成员id
-   * @response 200 queryMembeItemResponse 查询成功
+   * @response 200 queryMemberItemResponse 查询成功
    */
   queryItem() {
     const { ctx } = this;

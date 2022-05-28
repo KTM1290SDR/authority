@@ -14,6 +14,8 @@ module.exports = (appInfo) => {
 
   // use for cookie sign key, should change to your own and keep security
   config.keys = appInfo.name + "_1652622070165_6576";
+
+  // swaggerdoc文档配置
   config.swaggerdoc = {
     dirScanner: "./app/controller",
     apiInfo: {
@@ -31,11 +33,33 @@ module.exports = (appInfo) => {
     validateRoot: true, // 限制被验证值必须是一个对象。
   };
   // add your middleware config here
+  // 添加中间件
   config.middleware = ["errorHandler"];
+  // 只要有/api的接口都走errorHandler中间件
   config.errorHandler = {
     match: "/api",
   };
-
+  // 用sequelize插件配置mysql数据库
+  config.sequelize = {
+    dialect: "mysql",
+    host: "127.0.0.1",
+    password: "123456",
+    port: 3306,
+    database: "authority",
+    define: {
+      raw: true,
+      underscored: false,
+      charset: "utf8",
+      timestamp: true,
+      createdAt: "createdAt",
+      updatedAt: "updatedAt",
+    },
+    dialectOptions: {
+      dateStrings: true,
+      typeCast: true,
+      // collate: 'utf8_general_ci',
+    },
+  };
   // add your user config here
   const userConfig = {
     // myAppName: 'egg',
