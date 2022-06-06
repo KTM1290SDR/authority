@@ -151,11 +151,9 @@ module.exports = (app) => {
 - 调用 Service 进行业务处理，必要时处理转换 Service 的返回结果，让它适应用户的需求。
 - 通过 HTTP 将结果响应给用户。
 
-所有的 Controller 文件都必须放在 app/controller 目录下，可以支持多级目录，访问的时候可以通过目录名级联访问。Controller 支持多种形式进行编写，可以根据不同的项目场景和开发习惯来选择。
+所有的 Controller 文件都必须放在 app/controller 目录下，可以支持多级目录，访问的时候可以通过目录名级联访问。Controller 支持多种形式进行编写，可以根据不同的项目场景和开发习惯来选择。官方更推荐使用通过定义 Controller 类的方式来编写代码：
 
-Controller 类（推荐）
-
-我们可以通过定义 Controller 类的方式来编写代码：
+下面以 UserController 和 DepartmentController 为例
 
 ```
 // app/controller/user.js
@@ -186,9 +184,9 @@ class UserController extends Controller {
 
 ## 3.3 定义约束文件
 
-## 3.配置 egg-swagger-doc
+## 3.4 配置 egg-swagger-doc
 
-## 4.接口调试工具 Apifox
+## 3.5 接口调试工具 Apifox
 
 # 4.处理全局请求
 
@@ -204,7 +202,7 @@ class UserController extends Controller {
 
 ### 1.定义 Model
 
-### 2.基本查询
+### 2.编写 Service 实现基本查询
 
 ### 3.事务
 
