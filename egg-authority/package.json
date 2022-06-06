@@ -14,6 +14,7 @@
     "egg-swagger-doc": "^2.3.2",
     "egg-swagger-doc-feat": "^2.2.14",
     "egg-validate": "^2.0.2",
+    "moment": "^2.29.3",
     "mysql2": "^2.3.3"
   },
   "devDependencies": {

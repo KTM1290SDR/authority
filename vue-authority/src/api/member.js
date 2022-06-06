@@ -1,5 +1,8 @@
 import request from '@/utils/request'
-const serviceApi = process.env.VUE_APP_APIFOX_MOCK_API
+// const serviceApi = process.env.VUE_APP_APIFOX_MOCK_API
+const serviceApi = process.env.VUE_APP_API
+
+
 
 // 获取成员
 export const getMemberList = (params) => {

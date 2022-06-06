@@ -25,7 +25,6 @@ class DepartmentController extends Controller {
     const { ctx } = this;
     ctx.validate(ctx.rule.createDepartmentRequest, ctx.request.body);
     const res = await ctx.service.department.create(ctx.request.body);
-    console.log("resresresres", res);
     if (!res.__code_wrong) {
       res
         ? ctx.helper.body.CREATED_UPDATE({ ctx })
@@ -55,6 +54,14 @@ class DepartmentController extends Controller {
   async delete() {
     const { ctx } = this;
     ctx.validate(ctx.rule.deleteDepartmentRequest, ctx.request.body);
+    const res = await ctx.service.department.delete(ctx.request.body);
+    if (res.__code_wrong) {
+      ctx.helper.body.INVALID_REQUEST({
+        ctx,
+      });
+    } else {
+      ctx.helper.body.SUCCESS({ ctx });
+    }
   }
 }
 module.exports = DepartmentController;

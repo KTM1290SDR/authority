@@ -38,26 +38,30 @@ module.exports = {
       type: "string",
       description: "成员姓名",
       trim: true,
+      required: false,
     },
     phoneNumber: {
       type: "string",
       description: "手机号",
       trim: true,
+      required: false,
     },
     email: {
       type: "string",
       description: "邮箱",
       trim: true,
+      required: false,
     },
     department: {
       type: "string",
-      required: true,
       format: /^[0-9]{1,9}$/,
       description: "部门id",
+      required: false,
     },
     memberGroup: {
       type: "number",
       description: "成员分组",
+      required: false,
     },
     currentPage: {
       type: "number",

@@ -48,6 +48,17 @@ module.exports = {
           "^/mock": "/",
         },
       },
+      "/api": {
+        // 此处的写法，目的是为了 将 /api 替换成
+        target: "http://127.0.0.1:7001/",
+        // 允许跨域
+        changeOrigin: true,
+        // secure: false,
+        ws: true,
+        pathRewrite: {
+          "^/api": "/",
+        },
+      },
     },
     before: require("./mock/mock-server.js"),
   },

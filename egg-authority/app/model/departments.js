@@ -17,6 +17,11 @@ module.exports = (app) => {
 
   department.associate = function (models) {
     // associations can be defined here
+    department.hasMany(app.model.Departments, {
+      foreignKey: "parentId",
+      sourceKey: "id",
+      as: 'children'
+    });
   };
   return department;
 };

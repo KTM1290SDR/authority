@@ -17,9 +17,11 @@ class MemberController extends Controller {
    * @request query number *pageSize 当前页条数
    * @response 200 queryMemberResponse 查询成功
    */
-  query() {
+  async query() {
     const { ctx } = this;
     ctx.validate(ctx.rule.queryMembeRequest, ctx.query);
+    const res = await ctx.service.member.query(ctx.query);
+    ctx.helper.body.SUCCESS({ ctx, res });
   }
   /**
    * @summary 查询单个成员
@@ -27,9 +29,12 @@ class MemberController extends Controller {
    * @request query number *id 成员id
    * @response 200 queryMemberItemResponse 查询成功
    */
-  queryItem() {
+  async queryItem() {
     const { ctx } = this;
-    ctx.validate(ctx.rule.queryMembeRequest, ctx.query);
+    // todos
+    ctx.validate(ctx.rule.queryMembeItemRequest, ctx.query);
+    const res = await ctx.service.member.queryItem(ctx.query);
+    ctx.helper.body.SUCCESS({ ctx, res });
   }
   /**
    * @summary 新增成员
@@ -37,9 +42,15 @@ class MemberController extends Controller {
    * @request body createMembeRequest *body
    * @response 200 baseRequest 查询成功
    */
-  create() {
+  async create() {
     const { ctx } = this;
     ctx.validate(ctx.rule.createMembeRequest, ctx.request.body);
+    const res = await ctx.service.member.create(ctx.request.body);
+    if (res.__code_wrong) {
+      ctx.helper.body.INVALID_REQUEST({ ctx });
+    } else {
+      ctx.helper.body.SUCCESS({ ctx });
+    }
   }
   /**
    * @summary 更新成员
@@ -47,9 +58,15 @@ class MemberController extends Controller {
    * @request body updateMembeRequest *body
    * @response 200 baseRequest 查询成功
    */
-  update() {
+  async update() {
     const { ctx } = this;
     ctx.validate(ctx.rule.updateMembeRequest, ctx.request.body);
+    const res = await ctx.service.member.update(ctx.request.body);
+    if (res.__code_wrong) {
+      ctx.helper.body.INVALID_REQUEST({ ctx, res: res.error });
+    } else {
+      ctx.helper.body.SUCCESS({ ctx });
+    }
   }
   /**
    * @summary 删除成员
@@ -57,9 +74,15 @@ class MemberController extends Controller {
    * @request body deleteMembeRequest *body
    * @response 200 baseRequest 查询成功
    */
-  delete() {
+  async delete() {
     const { ctx } = this;
     ctx.validate(ctx.rule.deleteMembeRequest, ctx.request.body);
+    const res = await ctx.service.member.delete(ctx.request.body);
+    if (res.__code_wrong) {
+      ctx.helper.body.INVALID_REQUEST({ ctx });
+    } else {
+      ctx.helper.body.SUCCESS({ ctx });
+    }
   }
   /**
    * @summary 更新成员启用状态
@@ -67,9 +90,15 @@ class MemberController extends Controller {
    * @request body updateMembeStateRequest *body
    * @response 200 baseRequest 查询成功
    */
-  updateState() {
+  async updateState() {
     const { ctx } = this;
-    ctx.validate(ctx.rule.updateMembeRequest, ctx.request.body);
+    ctx.validate(ctx.rule.updateMembeStateRequest, ctx.request.body);
+    const res = await ctx.service.member.updateState(ctx.request.body);
+    if (res.__code_wrong) {
+      ctx.helper.body.INVALID_REQUEST({ ctx });
+    } else {
+      ctx.helper.body.SUCCESS({ ctx });
+    }
   }
   /**
    * @summary 更新成员部门
@@ -77,10 +106,15 @@ class MemberController extends Controller {
    * @request body updateDepartmentRequest *body
    * @response 200 baseRequest 查询成功
    */
-  updateDepartment() {
+  async updateDepartment() {
     const { ctx } = this;
     ctx.validate(ctx.rule.updateDepartmentRequest, ctx.request.body);
+    const res = await ctx.service.member.updateDepartment(ctx.request.body);
+    if (res.__code_wrong) {
+      ctx.helper.body.INVALID_REQUEST({ ctx, res: res.error });
+    } else {
+      ctx.helper.body.SUCCESS({ ctx });
+    }
   }
-
 }
 module.exports = MemberController;

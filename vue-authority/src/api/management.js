@@ -1,5 +1,6 @@
 import request from '@/utils/request'
-const serviceApi = process.env.VUE_APP_APIFOX_MOCK_API
+// const serviceApi = process.env.VUE_APP_APIFOX_MOCK_API
+const serviceApi = process.env.VUE_APP_API
 
 // 获取部门
 export const getDepartmentList = () => {
