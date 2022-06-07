@@ -165,21 +165,7 @@ module.exports = (app) => {
 ```
 // app/controller/user.js
 const Controller = require("egg").Controller;
-/**
- * @controller 成员 user
- */
 class UserController extends Controller {
-  /**
-   * @summary 查询用户
-   * @router get /api/user/query
-   * @request query string userName 成员姓名
-   * @request query string phone 手机号
-   * @request query string departmentId 部门id
-   * @request query string email 邮箱
-   * @request query number *currentPage 当前页
-   * @request query number *pageSize 当前页条数
-   * @response 200 queryUserResponse 查询成功
-   */
   async query() {
     const { ctx } = this;
     ctx.validate(ctx.rule.queryUserRequest, ctx.query);
@@ -193,6 +179,8 @@ module.exports = UserController;
 ## 3.3 定义约束
 
 ### 3.3.1 egg-validate 参数校验插件
+
+egg-validate 用于对参数进行校验
 
 ```
 $ npm i egg-validate --save
@@ -218,13 +206,15 @@ config.validate = {
   validateRoot: true, // 限制被验证值必须是一个对象。
 };
 ```
+
 ## 3.3.2 配置 [egg-swagger-doc](https://github.com/beansmile/egg-swagger-doc)
 
+egg-swagger-doc 可以根据代码中的固定格式的注解自动生成接口文档。
 
 安装
 
 ```
-$ npm i egg-swagger-doc --save
+$ npm i egg-swagger-doc-feat --save
 ```
 
 - 开启插件
@@ -233,12 +223,11 @@ $ npm i egg-swagger-doc --save
 // config/plugin.js
 exports.swaggerdoc = {
   enable: true,
-  package: 'egg-swagger-doc',
+  package: 'egg-swagger-doc-feat',
 };
 ```
 
 - [配置插件](https://github.com/beansmile/egg-swagger-doc/blob/master/config/config.default.js)
-
 
 ```
 // config/config.default.js
@@ -258,21 +247,67 @@ config.swaggerdoc = {
 
 ```
 
+在路由中定义重定向默认定向到 [swagger 文档页](http://127.0.0.1:7001)
+
 ```
 // app/router.js
 router.redirect('/', '/swagger-ui.html', 302);
 ```
 
+在 controller 文件中增加注解使 egg-swagger-doc-feat 可以扫描产生接口文档。注解详情查考[文档](https://www.npmjs.com/package/egg-swagger-doc-feat)。
+
+```
+
+// app/controller/user.js
+const Controller = require("egg").Controller;
+/**
+ * @controller 用户 user
+ */
+class UserController extends Controller {
+  /**
+   * @summary 查询用户
+   * @router get /api/user/query
+   * @request query string userName 用户姓名
+   * @request query string phone 手机号
+   * @request query string departmentId 部门id
+   * @request query string email 邮箱
+   * @request query number *currentPage 当前页
+   * @request query number *pageSize 当前页条数
+   * @response 200 queryUserResponse 查询成功
+   */
+  async query() {
+    const { ctx } = this;
+    ctx.validate(ctx.rule.queryUserRequest, ctx.query);
+    const res = await ctx.service.user.query(ctx.query);
+    ctx.helper.body.SUCCESS({ ctx, res });
+  }
+}
+module.exports = UserController;
+```
+
 ## 3.3.3 定义约束规则
 
+在 controller 写好注解后，需要在 contract 目录下创建对应的同名 js 文件。框架会把 contract 目录下的文件解析并挂载到 ctx.rule 下。约束规则详见[文档](https://www.npmjs.com/package/egg-swagger-doc-feat)
 
+- 定义请求规则
 
+```
+// app/contract/request/user.js
 
+```
 
+- 定义响应规则
 
+```
+// app/contract/response/user.js
 
+```
 
-## 3.5 接口调试工具 [Apifox](https://www.apifox.cn/)
+## 3.4 接口调试工具 [Apifox](https://www.apifox.cn/)
+
+在以上的教程中，接口的定义已经告一段落了。可以使用接口调试工具 Apifox 生成 mock 数据供前端使用。接下来只需要专注实现接口即可。具体配置流程详见[文档](https://www.apifox.cn/help/app/import/swagger/#%E6%89%8B%E5%8A%A8%E5%AF%BC%E5%85%A5)
+
+Apifox 除了可以生成 mock 数据外也可以发送请求调试接口。以/api/user/query 为例。可以验证刚刚配置的约束是否生效。
 
 # 4.处理全局请求
 
