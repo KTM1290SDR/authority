@@ -32,16 +32,21 @@ egg-project
 ├── app
 |   ├── router.js
 │   ├── controller
-│   |   └── home.js
+│   │   ├── department.js
+│   |   └── user.js
 │   ├── service (可选)
+│   │   ├── department.js
 │   |   └── user.js
 │   ├── middleware (可选)
-│   |   └── response_time.js
-│   ├── public (可选)
+│   |   └── errorHandler.js
 │   ├── contract (可选)
 │   |   ├── request (可选)
+│   |   │   ├──department.js
+│   |   |   └── user.js
 │   |   └── response (可选)
+
 │   ├── model (可选)
+│   │   ├── department.js
 │   |   └── user.js
 │   └── extend (可选)
 │       ├── helper.js (可选)
@@ -57,6 +62,8 @@ egg-project
 |   ├── config.test.js (可选)
 |   ├── config.local.js (可选)
 |   └── config.unittest.js (可选)
+├── database
+|   └── base.sql (可选)
 └── test
     ├── middleware
     |   └── response_time.test.js
@@ -159,7 +166,7 @@ module.exports = (app) => {
 // app/controller/user.js
 const Controller = require("egg").Controller;
 /**
- * @controller 成员 member
+ * @controller 成员 user
  */
 class UserController extends Controller {
   /**
@@ -180,13 +187,92 @@ class UserController extends Controller {
     ctx.helper.body.SUCCESS({ ctx, res });
   }
 }
+module.exports = UserController;
 ```
 
-## 3.3 定义约束文件
+## 3.3 定义约束
 
-## 3.4 配置 egg-swagger-doc
+### 3.3.1 egg-validate 参数校验插件
 
-## 3.5 接口调试工具 Apifox
+```
+$ npm i egg-validate --save
+```
+
+- 开启插件
+
+```
+// config/plugin.js
+exports.validate = {
+  enable: true,
+  package: 'egg-validate',
+};
+```
+
+- 配置插件
+
+```
+// config/config.default.js
+config.validate = {
+  // 配置参数校验器，基于parameter
+  convert: true, // 对参数可以使用convertType规则进行类型转换
+  validateRoot: true, // 限制被验证值必须是一个对象。
+};
+```
+## 3.3.2 配置 [egg-swagger-doc](https://github.com/beansmile/egg-swagger-doc)
+
+
+安装
+
+```
+$ npm i egg-swagger-doc --save
+```
+
+- 开启插件
+
+```
+// config/plugin.js
+exports.swaggerdoc = {
+  enable: true,
+  package: 'egg-swagger-doc',
+};
+```
+
+- [配置插件](https://github.com/beansmile/egg-swagger-doc/blob/master/config/config.default.js)
+
+
+```
+// config/config.default.js
+config.swaggerdoc = {
+  dirScanner: './app/controller', // 插件扫描的文档路径
+  apiInfo: {
+    title: 'egg-swagger',
+    description: 'swagger-ui for egg',
+    version: '1.0.0',
+  },
+  schemes: ['http', 'https'], // 访问地址协议http或者https
+  consumes: ['application/json'],
+  produces: ['application/json'],
+  routerMap: false,
+  enable: true,
+};
+
+```
+
+```
+// app/router.js
+router.redirect('/', '/swagger-ui.html', 302);
+```
+
+## 3.3.3 定义约束规则
+
+
+
+
+
+
+
+
+## 3.5 接口调试工具 [Apifox](https://www.apifox.cn/)
 
 # 4.处理全局请求
 
