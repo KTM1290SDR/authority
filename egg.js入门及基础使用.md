@@ -19,9 +19,9 @@ Egg 奉行『约定优于配置』，按照一套统一的约定进行应用开�
 在一个空文件夹内初始化简单 egg 应用程序骨架。
 
 ```
-$ npm init egg --type=simple
-$ npm i
-$ npm run dev
+npm init egg --type=simple
+npm i
+npm run dev
 ```
 
 ## 2.目录结构
@@ -168,9 +168,9 @@ const Controller = require("egg").Controller;
 class UserController extends Controller {
   async query() {
     const { ctx } = this;
-    ctx.validate(ctx.rule.queryUserRequest, ctx.query);
-    const res = await ctx.service.user.query(ctx.query);
-    ctx.helper.body.SUCCESS({ ctx, res });
+    ctx.validate(ctx.rule.queryUserRequest, ctx.query); // 校验请求参数
+    const res = await ctx.service.user.query(ctx.query); // 执行Service查询数据
+    ctx.helper.body.SUCCESS({ ctx, res });  // 整理数据格式返回
   }
 }
 module.exports = UserController;
@@ -183,7 +183,7 @@ module.exports = UserController;
 egg-validate 用于对参数进行校验
 
 ```
-$ npm i egg-validate --save
+npm i egg-validate --save
 ```
 
 - 开启插件
@@ -214,7 +214,7 @@ egg-swagger-doc 可以根据代码中的固定格式的注解自动生成接口�
 安装
 
 ```
-$ npm i egg-swagger-doc-feat --save
+npm i egg-swagger-doc-feat --save
 ```
 
 - 开启插件
@@ -257,7 +257,6 @@ router.redirect('/', '/swagger-ui.html', 302);
 在 controller 文件中增加注解使 egg-swagger-doc-feat 可以扫描产生接口文档。注解详情查考[文档](https://www.npmjs.com/package/egg-swagger-doc-feat)。
 
 ```
-
 // app/controller/user.js
 const Controller = require("egg").Controller;
 /**
@@ -311,20 +310,282 @@ Apifox 除了可以生成 mock 数据外也可以发送请求调试接口。以/
 
 # 4.处理全局请求
 
-## 1.配置异常中间件
+## 4.1 统一返回结构
 
-## 2.统一返回结构
+- [框架扩展](https://www.eggjs.org/zh-CN/basics/extend)
+
+框架提供了多种扩展点扩展自身的功能：
+
+- Application
+- Context
+- Request
+- Response
+- Helper
+
+### Helper
+
+Helper 函数用来提供一些实用的 utility 函数。
+
+它的作用在于我们可以将一些常用的动作抽离在 helper.js 里面成为一个独立的函数，这样可以用 JavaScript 来写复杂的逻辑，避免逻辑分散各处。另外还有一个好处是 Helper 这样一个简单的函数，可以让我们更容易编写测试用例。
+
+框架内置了一些常用的 Helper 函数。我们也可以编写自定义的 Helper 函数。
+
+### 扩展方式
+
+框架会把 app/extend/helper.js 中定义的对象与内置 helper 的 prototype 对象进行合并，在处理请求时会基于扩展后的 prototype 生成 helper 对象。
+
+例如，增加一系列整理格式方法方法：
+
+```
+// app/extend/helper.js
+
+"use strict";
+module.exports.body = {
+  // [GET]：服务器成功返回用户请求的数据
+  SUCCESS({ ctx, res = null, msg = "请求成功", code = 200 }) {
+    ctx.body = {
+      code,
+      data: res,
+      msg,
+    };
+  },
+  // [POST/PUT/PATCH]：用户新建或修改数据成功。
+  CREATED_UPDATE({ ctx, res = null, msg = "新建或修改数据成功" }) {
+    ctx.body = {
+      code: 201,
+      data: res,
+      msg,
+    };
+  },
+  /*
+   * @description [DELETE]：用户删除数据成功。
+   */
+  NO_CONTENT({ ctx, res = null, msg = "删除数据成功" }) {
+    ctx.body = {
+      code: 204,
+      data: res,
+      msg,
+    };
+  },
+  // [POST/PUT/PATCH]：用户发出的请求有错误，服务器没有进行新建或修改数据的操作
+  INVALID_REQUEST({
+    ctx,
+    res = null,
+    msg = "请求有错误，服务器没有进行新建、修改、删除数据的操作",
+    code = 400,
+    status = 400,
+  }) {
+    ctx.body = {
+      code,
+      data: res,
+      msg,
+    };
+    ctx.status = status;
+  },
+  // [*]：用户发出的请求针对的是不存在的记录，服务器没有进行操作
+  NOT_FOUND({ ctx, res = null, msg = "资源未找到", status = 200 }) {
+    ctx.body = {
+      code: 404,
+      data: res,
+      msg,
+    };
+    ctx.status = status;
+  },
+  // [*] 参数发生验证错误。
+  VALIDATION_FAILED({ ctx, res = null, msg = "参数发生验证错误" }) {
+    ctx.body = {
+      code: 422,
+      data: res,
+      msg,
+    };
+  },
+};
+
+```
+
+- 扩展使用
+
+通过 ctx.helper 访问到 helper 对象，例如需要在 app/controller/user.js 中使用 SUCCESS 整理格式：
+
+```
+// app/controller/user.js
+
+// 使用 helper 中的SUCCESS处理返回数据
+ctx.helper.body.SUCCESS({ ctx, res });
+```
+
+## 4.2 处理异常
+
+得益于框架支持的异步编程模型，错误完全可以用 try catch 来捕获。在编写应用代码时，所有地方都可以直接用 try catch 来捕获异常。框架也会在最外层通过 try catch 统一捕获错误。为了保证异常可追踪，必须保证所有抛出的异常都是 Error 类型，因为只有 Error 类型才会带上堆栈信息，定位到问题。
+
+### 4.2.1 配置 onerror 插件
+
+框架通过 onerror 插件提供了统一的错误处理机制。对一个请求的所有处理方法（Middleware、Controller、Service）中抛出的任何异常都会被它捕获，并自动根据请求想要获取的类型返回不同类型的错误（基于 Content Negotiation）。我们希望得到的是 RESTful API 风格，也就是说我们希望得到的是 JSON 格式的返回。需要在 config 文件中配置 onerror 插件。
+
+```
+// config/config.default.js
+config.exports = {
+  onerror: {
+    accepts: () => 'json',
+  },
+};
+```
+
+框架并不会将服务端返回的 404 状态当做异常来处理，但是框架提供了当响应为 404 且没有返回 body 时的默认响应。
+
+- 当请求被框架判定为需要 JSON 格式的响应时，会返回一段 JSON：
+
+```
+{ "message": "Not Found" }
+```
+
+- 当请求被框架判定为需要 HTML 格式的响应时，会返回一段 HTML：
+
+```
+<h1>404 Not Found</h1>
+```
+
+### 4.2.2 配置处理异常中间件
+
+- 中间件
+
+匹配路由前、匹配路由完成做的一系列的操作。 Egg 是基于 Koa 实现的，所以 Egg 的中间件形式和 Koa 的中间件形式是一样的，都是基于洋葱圈模型。所有的请求经过一个中间件的时候都会执行两次，对比 Express 形式的中间件，Koa 的模型可以非常方便的实现后置处理逻辑，对比 Koa 和 Express 的 Compress 中间件就可以明显的感受到 Koa 中间件模型的优势。
+
+- 编写异常处理中间件
+
+正常的业务逻辑已经正常完成了，但是异常我们还没有进行处理。在前面编写的代码中，Controller 和 Service 都有可能抛出异常，这也是我们推荐的编码方式，当发现客户端参数传递错误或者调用后端服务异常时，通过抛出异常的方式来进行中断。
+
+- Controller 中 this.ctx.validate() 进行参数校验，失败抛出异常。
+- Service 中调用 this.ctx.curl() 方法访问 CNode 服务，可能由于网络问题等原因抛出服务端异常。
+- Service 中拿到 CNode 服务端返回的结果后，可能会收到请求调用失败的返回结果，此时也会抛出异常。
+
+框架虽然提供了默认的异常处理，但是可能和我们在前面的接口约定不一致，因此我们需要自己实现一个统一错误处理的中间件来对错误进行处理。
+
+在 app/middleware 目录下新建一个 errorHandler.js 的文件来新建一个 middleware
+
+```
+// app/middleware/errorHandler.js
+
+'use strict';
+
+module.exports = (option, app) => {
+  return async function(ctx, next) {
+    try {
+      await next();
+       if (ctx.status === 404 && !ctx.body) {
+         ctx.body = { error: 'Not Found' }
+         ctx.status = status;
+       }
+    } catch (err) {
+      // 所有的异常都在 app 上触发一个 error 事件，框架会记录一条错误日志
+      app.emit('error', err, this);
+      const status = err.status || 500;
+      // 生产环境时 500 错误的详细错误内容不返回给客户端，因为可能包含敏感信息
+      const error = status === 500 && app.config.env === 'prod' ? 'Internal Server Error' : err.message;
+      // 从 error 对象上读出各个属性，设置到响应中
+      ctx.body = {
+        // code: status, // 服务端自身的处理逻辑错误(包含框架错误500 及 自定义业务逻辑错误533开始 ) 客户端请求参数导致的错误(4xx开始)，设置不同的状态码
+        error,
+      };
+      ctx.status = status;
+      /**
+       * 参数错误，mysql返回的错误处理
+       */
+      if (err.parent && err.parent.errno) {
+        const res = {
+          error,
+          detail: err.errors,
+        };
+        ctx.helper.body.INVALID_REQUEST({ ctx, res, code: err.parent.errno });
+      }
+      if (status === 422) {
+        const res = {
+          error,
+          detail: err.errors,
+        };
+        ctx.helper.body.VALIDATION_FAILED({ ctx, res });
+      } else {
+        app.logger.errorAndSentry(err);
+      }
+    }
+  };
+};
+
+```
+
+- 添加中间件
+
+```
+// config/config.default.js
+config.middleware = ["errorHandler"];
+
+// 指定路由接口开启中间件
+config.errorHandler = {
+  match: "/api",
+};
+```
 
 # 5.操作数据库
 
-## 1.创建数据库表
+## 5.1 创建数据库表
 
-## 2.sequelize
+## 5.2 [sequelize](https://www.sequelize.com.cn/)
 
-### 1.定义 Model
+Sequelize 是一个基于 promise 的 Node.js ORM, 目前支持 Postgres, MySQL, MariaDB, SQLite 以及 Microsoft SQL Server. 它具有强大的事务支持, 关联关系, 预读和延迟加载,读取复制等功能。
 
-### 2.编写 Service 实现基本查询
+Sequelize 遵从 语义版本控制。 支持 Node v10 及更高版本以便使用 ES6 功能。
 
-### 3.事务
+### 2.1 安装并配置 sequelize
+
+- 安装
+
+```
+npm install --save egg-sequelize mysql2
+```
+
+- 开启插件
+
+```
+// config/plugin.js
+exports.sequelize = {
+  enable: true,
+  package: 'egg-sequelize',
+};
+
+```
+
+- 配置插件
+
+```
+// config/config.default
+
+exports.sequelize = {
+  dialect: 'mysql',
+  host: '127.0.0.1',
+  port: 3306,
+  password: '123456',
+  database: 'beehive',
+  timezone: '+08:00',
+  define: {
+    raw: true,
+    underscored: false,
+    charset: 'utf8',
+    timestamp: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+    deletedAt: 'deleted_at',
+  },
+  dialectOptions: {
+    dateStrings: true,
+    typeCast: true,
+  },
+};
+```
+
+### 2.2 定义 Model
+
+### 2.3 编写 Service 实现基本查询
+
+### 2.4 事务
 
 # 6.开源项目
