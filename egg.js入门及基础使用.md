@@ -103,6 +103,11 @@ egg-project
 
   Config 项目和插件的配置。
 
+- **database**
+
+  数据库迁移文件。
+
+
 # 3.定义接口
 
 ## 3.1 定义路由
@@ -254,7 +259,7 @@ config.swaggerdoc = {
 router.redirect('/', '/swagger-ui.html', 302);
 ```
 
-在 controller 文件中增加注解使 egg-swagger-doc-feat 可以扫描产生接口文档。注解详情查考[文档](https://www.npmjs.com/package/egg-swagger-doc-feat)。
+在 controller 文件中增加注解使 egg-swagger-doc-feat 可以扫描产生接口文档。注解详情查考[文档](https://www.npmjs.com/package/egg-swagger-doc)。
 
 ```
 // app/controller/user.js
@@ -286,12 +291,63 @@ module.exports = UserController;
 
 ## 3.3.3 定义约束规则
 
-在 controller 写好注解后，需要在 contract 目录下创建对应的同名 js 文件。框架会把 contract 目录下的文件解析并挂载到 ctx.rule 下。约束规则详见[文档](https://www.npmjs.com/package/egg-swagger-doc-feat)
+在 controller 写好注解后，需要在 contract 目录下创建对应的同名 js 文件。框架会把 contract 目录下的文件解析并挂载到 ctx.rule 下。约束规则详见[文档](https://www.npmjs.com/package/egg-swagger-doc)
 
 - 定义请求规则
 
 ```
 // app/contract/request/user.js
+
+'use strict';
+module.exports = {
+  // 查询用户
+  queryUserRequest: {
+    userName: {
+      type: 'string',
+      description: '用户姓名',
+      trim: true,
+      required: false,
+    },
+    phone: {
+      type: 'string',
+      description: '手机号',
+      trim: true,
+      required: false,
+    },
+    email: {
+      type: 'string',
+      description: '邮箱',
+      trim: true,
+      required: false,
+    },
+    departmentId: {
+      type: 'string',
+      description: '部门id',
+      trim: true,
+      required: false,
+    },
+    createStartTime: {
+      type: 'string',
+      description: '创建开始时间',
+      trim: true,
+      required: false,
+    },
+    createEndTime: {
+      type: 'string',
+      description: '创建结束时间',
+      trim: true,
+      required: false,
+    },
+    currentPage: {
+      type: 'number',
+      description: '当前页',
+    },
+    pageSize: {
+      type: 'number',
+      description: '每页条数',
+    },
+  },
+};
 
 ```
 
@@ -299,6 +355,76 @@ module.exports = UserController;
 
 ```
 // app/contract/response/user.js
+
+'use strict';
+const { baseResponse } = require('./base');
+
+module.exports = {
+  // 查询用户
+  queryUserResponse: {
+    ...baseResponse('userPageList'),
+  },
+  // 用户分页
+  userPageList: {
+    total: {
+      type: 'number',
+      description: '总数',
+    },
+    list: {
+      type: 'array',
+      itemType: 'user',
+      description: '记录',
+    },
+  },
+  // 用户数据模型
+  user: {
+    id: {
+      type: 'string',
+      description: '用户id',
+    },
+    userName: {
+      type: 'string',
+      description: '用户姓名',
+    },
+    phone: {
+      type: 'string',
+      description: '手机号',
+    },
+    email: {
+      type: 'string',
+      description: '邮箱',
+    },
+    departmentId: {
+      type: 'string',
+      description: '部门id',
+    },
+  },
+};
+
+
+```
+
+```
+// app/contract/response/base.js
+
+'use strict';
+module.exports = {
+  baseResponse: (dataType) => {
+    return {
+      status: {
+        type: 'number',
+        example: 200,
+      },
+      message: {
+        type: 'string',
+        example: "成功",
+      },
+      data: {
+        type: dataType,
+      },
+    };
+  },
+};
 
 ```
 
@@ -469,19 +595,21 @@ config.exports = {
 'use strict';
 
 module.exports = (option, app) => {
-  return async function(ctx, next) {
+  return async (ctx, next) => {
     try {
       await next();
-       if (ctx.status === 404 && !ctx.body) {
-         ctx.body = { error: 'Not Found' }
-         ctx.status = status;
-       }
+      if (ctx.status === 404 && !ctx.body) {
+        ctx.helper.body.NOT_FOUND({ ctx });
+      }
     } catch (err) {
       // 所有的异常都在 app 上触发一个 error 事件，框架会记录一条错误日志
       app.emit('error', err, this);
       const status = err.status || 500;
       // 生产环境时 500 错误的详细错误内容不返回给客户端，因为可能包含敏感信息
-      const error = status === 500 && app.config.env === 'prod' ? 'Internal Server Error' : err.message;
+      const error =
+        status === 500 && app.config.env === 'prod'
+          ? 'Internal Server Error'
+          : err.message;
       // 从 error 对象上读出各个属性，设置到响应中
       ctx.body = {
         // code: status, // 服务端自身的处理逻辑错误(包含框架错误500 及 自定义业务逻辑错误533开始 ) 客户端请求参数导致的错误(4xx开始)，设置不同的状态码
@@ -502,10 +630,9 @@ module.exports = (option, app) => {
         const res = {
           error,
           detail: err.errors,
+          code: 422,
         };
         ctx.helper.body.VALIDATION_FAILED({ ctx, res });
-      } else {
-        app.logger.errorAndSentry(err);
       }
     }
   };
@@ -529,13 +656,45 @@ config.errorHandler = {
 
 ## 5.1 创建数据库表
 
+```
+-- database/base.sql
+
+-- 新建部门表
+DROP TABLE IF EXISTS `departments`;
+CREATE TABLE `departments` (
+    `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '唯一标识',
+    `name` varchar(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '部门名称',
+    `createdDate` datetime(0) NOT NULL COMMENT '创建时间',
+    `updatedDate` datetime(0) NOT NULL COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE, 
+    UNIQUE INDEX `name`(`name`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1000001 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+INSERT INTO `departments` VALUES (1000000, '总公司', now(), now());
+
+-- 新建用户表
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users` (
+    `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '唯一标识',
+    `departmentId` int(11) UNSIGNED NOT NULL DEFAULT 0 COMMENT '所在部门id',
+    `name` varchar(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '成员名称',
+    `email` varchar(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '邮箱',
+    `phone` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '手机号',
+    `createdDate` datetime(0) NOT NULL COMMENT '创建时间',
+    `updatedDate` datetime(0) NOT NULL COMMENT '更新时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `name`(`name`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1000001 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+```
+
+
 ## 5.2 [sequelize](https://www.sequelize.com.cn/)
 
 Sequelize 是一个基于 promise 的 Node.js ORM, 目前支持 Postgres, MySQL, MariaDB, SQLite 以及 Microsoft SQL Server. 它具有强大的事务支持, 关联关系, 预读和延迟加载,读取复制等功能。
 
 Sequelize 遵从 语义版本控制。 支持 Node v10 及更高版本以便使用 ES6 功能。
 
-### 2.1 安装并配置 sequelize
+### 5.2.1 安装并配置 sequelize
 
 - 安装
 
@@ -564,16 +723,16 @@ exports.sequelize = {
   host: '127.0.0.1',
   port: 3306,
   password: '123456',
-  database: 'beehive',
+  database: 'my_egg',
   timezone: '+08:00',
   define: {
     raw: true,
     underscored: false,
     charset: 'utf8',
     timestamp: true,
-    createdAt: 'created_at',
-    updatedAt: 'updated_at',
-    deletedAt: 'deleted_at',
+    createdAt: 'createdDate',
+    updatedAt: 'updatedDate',
+    deletedAt: 'deletedDate',
   },
   dialectOptions: {
     dateStrings: true,
@@ -582,10 +741,88 @@ exports.sequelize = {
 };
 ```
 
-### 2.2 定义 Model
+### 5.2.2 定义 Model
 
-### 2.3 编写 Service 实现基本查询
+模型是 Sequelize 的本质. 模型是代表数据库中表的抽象. 在 Sequelize 中,它是一个 Model 的扩展类.
 
-### 2.4 事务
+该模型告诉 Sequelize 有关它代表的实体的几件事,例如数据库中表的名称以及它具有的列(及其数据类型).
+
+Sequelize 中的模型有一个名称. 此名称不必与它在数据库中表示的表的名称相同. 通常,模型具有单数名称(例如,User),而表具有复数名称(例如, Users),当然这是完全可配置的.
+
+定义模型时主要参考建表的sql，是一个把sql对象化的过程。
+
+- 定义用户模型
+
+```
+// app/model/users.js
+
+'use strict';
+module.exports = (app) => {
+  const Sequelize = app.Sequelize;
+
+  const users = app.model.define('users', {
+    id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+    departmentId: { type: Sequelize.INTEGER },
+    name: Sequelize.STRING(60),
+    email: Sequelize.STRING(60),
+    phone: Sequelize.STRING(15),
+  });
+  users.associate = (models) => {
+    // 定义与部门模型的关联
+    users.hasOne(app.model.Departments, {
+      foreignKey: 'id',
+      sourceKey: 'departmentId',
+      as: 'department',
+    });
+  };
+  return users;
+};
+
+```
+  
+- 定义部门模型
+
+```
+// app/model/departments.js
+'use strict';
+module.exports = (app) => {
+  const Sequelize = app.Sequelize;
+
+  const departments = app.model.define('departments', {
+    id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+    name: Sequelize.STRING(60),
+  });
+
+  return departments;
+};
+
+```
+
+## 5.3 编写 Service 实现基本查询
+
+### 5.3.1 Service
+  
+简单来说，Service 就是在复杂业务场景下用于做业务逻辑封装的一个抽象层，提供这个象有以下几个好处：
+
+- 保持 Controller 中的逻辑更加简洁。
+- 保持业务逻辑的独立性，抽象出来的 Service 可以被多个 Controller 重复调用。
+- 将逻辑和展现分离，更容易编写测试用例。
+ 
+使用场景
+
+- 复杂数据的处理，比如要展现的信息需要从数据库获取，还要经过一定的规则计算，才能返回用户显示。或者计算完成后，更新到数据库。
+- 第三方服务的调用，比如 GitHub 信息获取等。 
+
+Service ctx 详解
+
+为了可以获取用户请求的链路，我们在 Service 初始化中，注入了请求上下文, 用户在方法中可以直接通过 this.ctx 来获取上下文相关信息。关于上下文的具体详解可以参看 Context, 有了 ctx 我们可以拿到框架给我们封装的各种便捷属性和方法。比如我们可以用：
+
+- this.ctx.curl 发起网络调用。
+- this.ctx.service.otherService 调用其他 Service。
+- this.ctx.db 发起数据库调用等， db 可能是其他插件提前挂载到 app 上的模块。
+
+## 5.4 [事务](https://www.sequelize.com.cn/other-topics/transactions)
+
 
 # 6.开源项目
+
