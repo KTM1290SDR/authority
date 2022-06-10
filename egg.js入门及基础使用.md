@@ -411,11 +411,11 @@ module.exports = {
 module.exports = {
   baseResponse: (dataType) => {
     return {
-      status: {
+      code: {
         type: 'number',
         example: 200,
       },
-      message: {
+      msg: {
         type: 'string',
         example: "成功",
       },
@@ -602,8 +602,6 @@ module.exports = (option, app) => {
         ctx.helper.body.NOT_FOUND({ ctx });
       }
     } catch (err) {
-      // 所有的异常都在 app 上触发一个 error 事件，框架会记录一条错误日志
-      app.emit('error', err, this);
       const status = err.status || 500;
       // 生产环境时 500 错误的详细错误内容不返回给客户端，因为可能包含敏感信息
       const error =
