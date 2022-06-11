@@ -165,7 +165,7 @@ module.exports = (app) => {
 
 所有的 Controller 文件都必须放在 app/controller 目录下，可以支持多级目录，访问的时候可以通过目录名级联访问。Controller 支持多种形式进行编写，可以根据不同的项目场景和开发习惯来选择。官方更推荐使用通过定义 Controller 类的方式来编写代码：
 
-下面以 UserController 和 DepartmentController 为例
+下面以 UserController  为例
 
 ```
 // app/controller/user.js
@@ -260,6 +260,8 @@ router.redirect('/', '/swagger-ui.html', 302);
 ```
 
 在 controller 文件中增加注解使 egg-swagger-doc-feat 可以扫描产生接口文档。注解详情查考[文档](https://www.npmjs.com/package/egg-swagger-doc)。
+
+- 定义接口参数
 
 ```
 // app/controller/user.js
@@ -818,6 +820,16 @@ Service ctx 详解
 - this.ctx.curl 发起网络调用。
 - this.ctx.service.otherService 调用其他 Service。
 - this.ctx.db 发起数据库调用等， db 可能是其他插件提前挂载到 app 上的模块。
+
+### 5.3.2 编写业务逻辑
+
+- 查询用户
+
+- 新增用户
+
+- 删除用户
+
+- 编辑用户
 
 ## 5.4 [事务](https://www.sequelize.com.cn/other-topics/transactions)
 
