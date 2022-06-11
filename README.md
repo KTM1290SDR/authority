@@ -107,7 +107,6 @@ egg-project
 
   数据库迁移文件。
 
-
 # 3.定义接口
 
 ## 3.1 定义路由
@@ -143,6 +142,7 @@ module.exports = (app) => {
   // 部门
   router.get("/api/department/query", controller.department.query); // 查询部门
   router.post("/api/department/create", controller.department.create);  // 新增部门
+  router.delete("/api/department/delete", controller.department.delete);  // 删除部门
 };
 ```
 
@@ -165,7 +165,7 @@ module.exports = (app) => {
 
 所有的 Controller 文件都必须放在 app/controller 目录下，可以支持多级目录，访问的时候可以通过目录名级联访问。Controller 支持多种形式进行编写，可以根据不同的项目场景和开发习惯来选择。官方更推荐使用通过定义 Controller 类的方式来编写代码：
 
-下面以 UserController  为例
+下面以 UserController 为例
 
 ```
 // app/controller/user.js
@@ -396,9 +396,9 @@ module.exports = {
       type: 'string',
       description: '邮箱',
     },
-    departmentId: {
+    departmentName: {
       type: 'string',
-      description: '部门id',
+      description: '部门名称',
     },
   },
 };
@@ -666,7 +666,7 @@ CREATE TABLE `departments` (
     `name` varchar(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '' COMMENT '部门名称',
     `createdDate` datetime(0) NOT NULL COMMENT '创建时间',
     `updatedDate` datetime(0) NOT NULL COMMENT '更新时间',
-    PRIMARY KEY (`id`) USING BTREE, 
+    PRIMARY KEY (`id`) USING BTREE,
     UNIQUE INDEX `name`(`name`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1000001 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
@@ -686,7 +686,6 @@ CREATE TABLE `users` (
     UNIQUE INDEX `name`(`name`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1000001 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 ```
-
 
 ## 5.2 [sequelize](https://www.sequelize.com.cn/)
 
@@ -749,7 +748,7 @@ exports.sequelize = {
 
 Sequelize 中的模型有一个名称. 此名称不必与它在数据库中表示的表的名称相同. 通常,模型具有单数名称(例如,User),而表具有复数名称(例如, Users),当然这是完全可配置的.
 
-定义模型时主要参考建表的sql，是一个把sql对象化的过程。
+定义模型时主要参考建表的 sql，是一个把 sql 对象化的过程。
 
 - 定义用户模型
 
@@ -779,7 +778,7 @@ module.exports = (app) => {
 };
 
 ```
-  
+
 - 定义部门模型
 
 ```
@@ -801,17 +800,17 @@ module.exports = (app) => {
 ## 5.3 编写 Service 实现基本查询
 
 ### 5.3.1 Service
-  
+
 简单来说，Service 就是在复杂业务场景下用于做业务逻辑封装的一个抽象层，提供这个象有以下几个好处：
 
 - 保持 Controller 中的逻辑更加简洁。
 - 保持业务逻辑的独立性，抽象出来的 Service 可以被多个 Controller 重复调用。
 - 将逻辑和展现分离，更容易编写测试用例。
- 
+
 使用场景
 
 - 复杂数据的处理，比如要展现的信息需要从数据库获取，还要经过一定的规则计算，才能返回用户显示。或者计算完成后，更新到数据库。
-- 第三方服务的调用，比如 GitHub 信息获取等。 
+- 第三方服务的调用，比如 GitHub 信息获取等。
 
 Service ctx 详解
 
@@ -823,17 +822,153 @@ Service ctx 详解
 
 ### 5.3.2 编写业务逻辑
 
+- 新增部门
+
+```
+// app/service/department.js
+
+const Service = require("egg").Service;
+class DepartmentService extends Service {
+  async create(body) {
+    const { ctx } = this;
+    const { departmentName } = body;
+    const newDepartments = await ctx.model.Departments.create({
+      name: departmentName,
+    });
+    return newDepartments.id;
+  }
+}
+module.exports = DepartmentService;
+```
+
 - 查询用户
 
-- 新增用户
+```
+// app/service/user.js
 
-- 删除用户
-
-- 编辑用户
+const Service = require("egg").Service;
+const { Op } = require("sequelize");
+class UserService extends Service {
+  async query(query) {
+    const { ctx } = this;
+    const {
+      userName,
+      phone,
+      departmentId,
+      email,
+      createStartTime,
+      createEndTime,
+      currentPage,
+      pageSize,
+    } = query;
+    const where = {
+      departmentId,
+      name: { [Op.substring]: userName },
+      phone: { [Op.substring]: phone },
+      email: { [Op.substring]: email },
+      createdDate: { [Op.between]: [createStartTime, createEndTime] },
+    };
+    const list = await ctx.model.Members.findAll({
+      limit: pageSize,
+      offset: (currentPage - 1) * pageSize,
+      where,
+      include: {
+        model: ctx.model.Departments.name,
+        as: "departmentName",
+      },
+      attributes: [
+        "id",
+        ["name", "userName"],
+        "phone",
+        "email",
+        ["departmentsId", "department"],
+      ],
+    });
+    const total = await ctx.model.Users.count({ where });
+    return {
+      list,
+      total,
+    };
+  }
+}
+module.exports = UserService;
+```
 
 ## 5.4 [事务](https://www.sequelize.com.cn/other-topics/transactions)
 
+事务是恢复和并发控制的基本单位。
 
-# 6.开源项目
+事务应该具有 4 个属性：原子性、一致性、隔离性、持久性。这四个属性通常称为 ACID 特性。
 
- 
+> 原子性（atomicity）。一个事务是一个不可分割的工作单位，事务中包括的操作要么都做，要么都不做。
+
+> 一致性（consistency）。事务必须是使数据库从一个一致性状态变到另一个一致性状态。一致性与原子性是密切相关的。
+
+> 隔离性（isolation）。一个事务的执行不能被其他事务干扰。即一个事务内部的操作及使用的数据对并发的其他事务是隔离的，并发执行的各个事务之间不能互相干扰。
+
+> 持久性（durability）。持久性也称永久性（permanence），指一个事务一旦提交，它对数据库中数据的改变就应该是永久性的。接下来的其他操作或故障不应该对其有任何影响。
+
+- 删除部门
+
+```
+// app/service/department.js
+
+const Service = require("egg").Service;
+
+class DepartmentService extends Service {
+  async delete(body) {
+    const { ctx } = this;
+    const { id } = body;
+    try {
+      return await ctx.model.transaction(async (t) => {
+        const delCount = await ctx.model.Departments.destroy(
+          {
+            where: {
+              id,
+            },
+          },
+          { transaction: t }
+        );
+        await ctx.model.Members.update(
+          { departmentsId: 0 },
+          {
+            where: {
+              departmentsId: id,
+            },
+          },
+          { transaction: t }
+        );
+        if (!delCount) {
+          throw new Error("部门记录不存在!");
+        }
+        // 如果执行到此行,则表示事务已成功提交
+      });
+    } catch (error) {
+      // 如果执行到此,则发生错误.
+      // 该事务已由 Sequelize 自动回滚！
+      return error;
+    }
+  }
+}
+module.exports = DepartmentService;
+```
+
+# 6.[Demo](https://github.com/KTM1290SDR/authority/tree/master#readme)
+
+一般后台管理系统表格业务 demo
+
+# 7.开源项目 beehive
+
+- 介绍
+
+Beehive 是一个项目管理系统。参考于 Teambetion、PearProject，实现部分功能。
+
+这是一个 Vue+Node.js 的 js 全栈项目。基于 RBAC 模型做权限控制，动态配置菜单，前端实现页面元素级别的权限控制。通过 WebSocket 实现站内信功能，任务看板中，实现更新同步推送。一旦其他项目成员有对我们当前查看的项目任务做任何的操作，页面都将立即同步更新，并向此任务的所有参与者（除了操作者）发送消息通知。注册和找回密码需要通过邮箱验证码验证，可以通过 github 授权登陆（不是很稳定）。
+
+Node.js 框架选用的是 Egg.js，配合 sequelize，自己写了一个小工具。可以通过填写表字段的配置，执行 npm run generator-entity 自动生成一整套文件，包括 Swagger、数据校验 validate、Sequelize 需要的 model、controller、service、router。并自动创建数据库表，包括每个字段的类型、长度、是否能为空、默认值、注释、索引、甚至是外键都能搞定。因为加了权限控制，所以还要到前端的资源管理中添加一下新增的资源，并在角色中点选分配一下，就完成了一张表的 CRUD 了，包括新增、修改、详情、批量删除、分页列表。当然这还是有很多可以优化的空间的，但也基本够用了。为了优化鉴权消耗，以及满足 WebSocket 的可靠性设计需要，系统引入 Redis 做缓存。
+
+密码是加盐存储的，且在传输过程中使用了 RSA 做了非对称加密。Jwt 认证使用 Access Token + Refresh Token，配合黑名单。
+
+- [前端地址](https://github.com/Imfdj/vue-beehive)
+
+- [后端地址](https://github.com/Imfdj/egg-beehive)
