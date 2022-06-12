@@ -27,6 +27,9 @@ module.exports = (appInfo) => {
     enable: true,
     routerMap: true,
   };
+  config.onerror = {
+    accepts: () => "json",
+  };
   config.validate = {
     // 配置参数校验器，基于parameter
     convert: true, // 对参数可以使用convertType规则进行类型转换
@@ -45,6 +48,7 @@ module.exports = (appInfo) => {
     host: "127.0.0.1",
     password: "123456",
     port: 3306,
+    timezone: '+08:00',
     database: "authority",
     define: {
       raw: true,

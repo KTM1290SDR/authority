@@ -23,9 +23,9 @@ const body = {
       description: "邮箱",
       trim: true,
     },
-    department: {
+    departmentId: {
       type: "number",
-      required: true,
+      required: false,
       description: "部门id",
     },
   },
@@ -36,26 +36,41 @@ module.exports = {
   queryMembeRequest: {
     memberName: {
       type: "string",
+      required: false,
+      min: 2,
+      max: 5,
       description: "成员姓名",
       trim: true,
-      required: false,
     },
     phoneNumber: {
       type: "string",
+      format: /^1[34578]\d{9}$/,
+      required: false,
       description: "手机号",
       trim: true,
-      required: false,
     },
     email: {
       type: "string",
+      required: false,
+      format: /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/,
       description: "邮箱",
+      trim: true,
+    },
+    departmentId: {
+      type: "number",
+      required: false,
+      description: "部门id",
+    },
+    createdDateStart: {
+      type: "string",
+      description: "入职开始时间",
       trim: true,
       required: false,
     },
-    department: {
+    createdDateEnd: {
       type: "string",
-      format: /^[0-9]{1,9}$/,
-      description: "部门id",
+      description: "入职结束时间",
+      trim: true,
       required: false,
     },
     memberGroup: {
@@ -75,7 +90,7 @@ module.exports = {
     },
   },
   // 查询单个成员
-  queryMembeItemRequest: {
+  queryMemberItemRequest: {
     id: {
       type: "string",
       required: true,
@@ -84,11 +99,11 @@ module.exports = {
     },
   },
   // 新增成员
-  createMembeRequest: {
+  createMemberRequest: {
     ...body.member,
   },
   // 编辑成员
-  updateMembeRequest: {
+  updateMemberRequest: {
     id: {
       type: "string",
       required: true,
@@ -98,7 +113,7 @@ module.exports = {
     ...body.member,
   },
   // 删除成员
-  deleteMembeRequest: {
+  deleteMemberRequest: {
     ids: {
       type: "array",
       itemType: "string",
@@ -107,7 +122,7 @@ module.exports = {
     },
   },
   // 更新成员状态
-  updateMembeStateRequest: {
+  updateMemberStateRequest: {
     ids: {
       type: "array",
       itemType: "string",
@@ -128,7 +143,7 @@ module.exports = {
       required: true,
       description: "成员id数组",
     },
-    departId: {
+    departmentId: {
       type: "string",
       required: true,
       format: /^[0-9]{1,9}$/,

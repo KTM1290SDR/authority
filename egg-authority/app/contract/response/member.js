@@ -1,21 +1,19 @@
 "use strict";
+
+const { baseResponse } = require("./base");
+
 module.exports = {
-  // 查询部门列表
+  // 查询成员列表
   queryMemberResponse: {
-    code: { type: "number", required: true, default: 200 },
-    data: { type: "pageList", required: true },
-    msg: { type: "string", required: true, default: "请求成功" },
+    ...baseResponse,
+    data: {
+      type: "pageList",
+    },
   },
   // 查询单个成员
   queryMemberItemResponse: {
-    code: { type: "number", required: true, default: 200 },
+    ...baseResponse,
     data: { type: "member", required: true },
-    msg: { type: "string", required: true, default: "请求成功" },
-  },
-  importMemberItemResponse: {
-    code: { type: "number", required: true, default: 200 },
-    data: { type: "file", required: true },
-    msg: { type: "string", required: true, default: "请求成功" },
   },
   // 分页
   pageList: {
@@ -26,7 +24,6 @@ module.exports = {
     total: {
       type: "number",
       required: true,
-      default: 0,
     },
   },
   member: {
@@ -64,13 +61,17 @@ module.exports = {
       description: "邮箱",
       trim: true,
     },
-    department: {
+    departmentId: {
       type: "string",
       required: true,
       format: /^[0-9]{1,9}$/,
       description: "部门id",
     },
-    enable: {
+    departmentName: {
+      type: "string",
+      description: "部门名字",
+    },
+    state: {
       type: "boolean",
       required: true,
       description: "启用状态",

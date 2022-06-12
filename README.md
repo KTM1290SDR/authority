@@ -594,7 +594,7 @@ config.exports = {
 ```
 // app/middleware/errorHandler.js
 
-'use strict';
+"use strict";
 
 module.exports = (option, app) => {
   return async (ctx, next) => {
@@ -607,13 +607,13 @@ module.exports = (option, app) => {
       const status = err.status || 500;
       // 生产环境时 500 错误的详细错误内容不返回给客户端，因为可能包含敏感信息
       const error =
-        status === 500 && app.config.env === 'prod'
-          ? 'Internal Server Error'
+        status === 500 && app.config.env === "prod"
+          ? "Internal Server Error"
           : err.message;
       // 从 error 对象上读出各个属性，设置到响应中
       ctx.body = {
-        // code: status, // 服务端自身的处理逻辑错误(包含框架错误500 及 自定义业务逻辑错误533开始 ) 客户端请求参数导致的错误(4xx开始)，设置不同的状态码
-        error,
+        code: status, // 服务端自身的处理逻辑错误(包含框架错误500 及 自定义业务逻辑错误533开始 ) 客户端请求参数导致的错误(4xx开始)，设置不同的状态码
+        msg: error,
       };
       ctx.status = status;
       /**
@@ -627,16 +627,12 @@ module.exports = (option, app) => {
         ctx.helper.body.INVALID_REQUEST({ ctx, res, code: err.parent.errno });
       }
       if (status === 422) {
-        const res = {
-          error,
-          detail: err.errors,
-          code: 422,
-        };
-        ctx.helper.body.VALIDATION_FAILED({ ctx, res });
+        ctx.helper.body.VALIDATION_FAILED({ ctx, res: err.errors });
       }
     }
   };
 };
+
 
 ```
 
@@ -953,7 +949,7 @@ class DepartmentService extends Service {
 module.exports = DepartmentService;
 ```
 
-# 6.[Demo](https://github.com/KTM1290SDR/authority/tree/master#readme)
+# 6.[Demo](https://github.com/KTM1290SDR/authority)
 
 一般后台管理系统表格业务 demo
 

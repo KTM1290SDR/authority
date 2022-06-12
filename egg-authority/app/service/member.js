@@ -8,14 +8,13 @@ class DepartmentService extends Service {
       memberName,
       phoneNumber,
       email,
-      department,
+      departmentsId,
       memberGroup,
       currentPage,
       pageSize,
     } = query;
     // 成员分组
     const memberGroupList = {
-      "": {},
       // 全部
       1: {},
       // 新加入成员
@@ -29,12 +28,6 @@ class DepartmentService extends Service {
       // 停用成员
       4: { state: false },
     };
-    const queryMap = {
-      memberName: "name",
-      email: "email",
-      phoneNumber: "phone",
-      department: "departmentsId",
-    };
     let where = {
       name: {
         [Op.substring]: memberName,
@@ -45,19 +38,15 @@ class DepartmentService extends Service {
       phone: {
         [Op.substring]: phoneNumber,
       },
-      departmentsId: department,
+      createdAt: { [Op.between]: [createStartTime, createEndTime] },
+      departmentsId,
       ...memberGroupList[memberGroup],
     };
-    for (const key in query) {
-      if (Object.hasOwnProperty.call(query, key)) {
-        const element = query[key];
-        console.log(typeof element === 'undefined')
-        if (element === "" || typeof element === 'undefined') {
-          delete where[queryMap[key]];
-        }
-      }
-    }
-    console.log(where)
+    console.log(
+      where,
+      Object.keys(ctx.model.Members),
+      ctx.model.Members.getAttributes()
+    );
     const list = await ctx.model.Members.findAll({
       limit: pageSize,
       offset: (currentPage - 1) * pageSize,
@@ -81,16 +70,16 @@ class DepartmentService extends Service {
   // 新增成员
   async create(body) {
     const { ctx } = this;
-    const { memberName, phoneNumber, email, department } = body;
+    const { memberName, phoneNumber, email, departmentId } = body;
     try {
-      if (department && !(await ctx.model.Departments.findByPk(department))) {
-        return { __code_wrong: 400, error: "已传的部门不存在！" };
+      if (!(await ctx.model.Departments.findByPk(departmentId))) {
+        throw new Error("部门不存在！");
       }
       // 由于是新增操作所以走事务
       return await ctx.model.transaction(async (t) => {
         return await ctx.model.Members.create(
           {
-            departmentsId: department,
+            departmentsId: departmentId,
             name: memberName,
             email: email,
             phone: phoneNumber,
@@ -99,7 +88,7 @@ class DepartmentService extends Service {
         );
       });
     } catch (error) {
-      return { __code_wrong: 400 };
+      throw error;
     }
   }
   // 查询单个成员
@@ -110,15 +99,15 @@ class DepartmentService extends Service {
       where: {
         id,
       },
-      // include: {
-      //   model: ctx.model.Departments,
-      //   as: "department",
-      // },
+      include: {
+        attributes: [["name", "departmentName"]],
+        model: ctx.model.Departments,
+        as: "department",
+      },
       attributes: [
         ["id", "memberId"],
         ["name", "memberName"],
-        ["departmentsId", "department"],
-        "departmentsId",
+        ["departmentsId", "departmentId"],
         ["phone", "phoneNumber"],
         "state",
         "email",
@@ -132,7 +121,7 @@ class DepartmentService extends Service {
     const { ids } = body;
     try {
       return await ctx.model.transaction(async (t) => {
-        return await ctx.model.Members.destroy(
+        const delCount = await ctx.model.Members.destroy(
           {
             where: {
               id: {
@@ -142,26 +131,25 @@ class DepartmentService extends Service {
           },
           { transaction: t }
         );
+        if (delCount !== ids.length) {
+          throw new Error("部分删除失败！");
+        }
       });
     } catch (error) {
-      console.log(error);
-      return { __code_wrong: 400, error };
+      throw error;
     }
   }
   // 更新成员
   async update(body) {
     const { ctx } = this;
-    const { id, memberName, phoneNumber, email, department } = body;
-    if (
-      (await ctx.model.Departments.findByPk(department)) &&
-      (await ctx.model.Members.findByPk(id))
-    ) {
+    const { id, memberName, phoneNumber, email, departmentId } = body;
+    if (await ctx.model.Departments.findByPk(departmentId)) {
       try {
         return await ctx.model.transaction(async (t) => {
-          return await ctx.model.Members.update(
+          const updateCount = await ctx.model.Members.update(
             {
               name: memberName,
-              departmentsId: department,
+              departmentsId: departmentId,
               email,
               phone: phoneNumber,
             },
@@ -172,12 +160,15 @@ class DepartmentService extends Service {
             },
             { transaction: t }
           );
+          if (!updateCount[0]) {
+            throw new Error("更新的成员不存在！");
+          }
         });
       } catch (error) {
-        return { __code_wrong: 500, error };
+        throw error;
       }
     } else {
-      return { __code_wrong: 500, error: "部门或成员不存在" };
+      throw new Error("部门不存在！");
     }
   }
   // 更新成员启用状态
@@ -186,7 +177,7 @@ class DepartmentService extends Service {
     const { ids, state } = body;
     try {
       return await ctx.model.transaction(async (t) => {
-        return await ctx.model.Members.update(
+        const updateCount = await ctx.model.Members.update(
           { state },
           {
             where: {
@@ -197,21 +188,24 @@ class DepartmentService extends Service {
           },
           { transaction: t }
         );
+        console.log(updateCount);
+        if (updateCount[0] !== ids.length) {
+          throw new Error("部分成员更新失败！");
+        }
       });
     } catch (error) {
-      console.log(error);
-      return { __code_wrong: 400, error };
+      throw error;
     }
   }
   // 更新成员的部门
   async updateDepartment(body) {
     const { ctx } = this;
-    const { membeIds, departId } = body;
-    if (await ctx.model.Departments.findByPk(departId)) {
+    const { membeIds, departmentId } = body;
+    if (await ctx.model.Departments.findByPk(departmentId)) {
       try {
         return await ctx.model.transaction(async (t) => {
-          return await ctx.model.Members.update(
-            { departmentsId: departId },
+          const updateCount = await ctx.model.Members.update(
+            { departmentsId: departmentId },
             {
               where: {
                 id: {
@@ -221,12 +215,15 @@ class DepartmentService extends Service {
             },
             { transaction: t }
           );
+          if (updateCount[0] !== membeIds.length) {
+            throw new Error("部分成员更新失败！");
+          }
         });
       } catch (error) {
-        return { __code_wrong: 500, error };
+        throw error;
       }
     } else {
-      return { __code_wrong: 500, error: "部门不存在" };
+      throw new Error("部门不存在！");
     }
   }
 }

@@ -1,10 +1,14 @@
 "use strict";
+const { baseResponse } = require("./base");
+
 module.exports = {
   // 查询部门列表
   queryDepartmentResponse: {
-    code: { type: "number", required: true, default: 200 },
-    data: { type: "array", itemType: "departmentItem" },
-    msg: { type: "string", required: true, default: "请求成功" },
+    ...baseResponse,
+    data: {
+      type: "array",
+      itemType: "departmentItem",
+    },
   },
   // 部门
   departmentItem: {

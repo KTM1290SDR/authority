@@ -18,50 +18,45 @@ class DepartmentController extends Controller {
    * @summary 新增部门
    * @router post /api/department/add
    * @request body createDepartmentRequest *body
-   * @response 200 baseRequest 查询成功
+   * @response 200 baseResponse 查询成功
    *
    */
   async add() {
     const { ctx } = this;
-    ctx.validate(ctx.rule.createDepartmentRequest, ctx.request.body);
-    const res = await ctx.service.department.create(ctx.request.body);
-    if (!res.__code_wrong) {
-      res
-        ? ctx.helper.body.CREATED_UPDATE({ ctx })
-        : ctx.helper.body.INVALID_REQUEST({ ctx });
-    } else {
-      switch (res.__code_wrong) {
-        case 40000:
-          ctx.helper.body.INVALID_REQUEST({
-            ctx,
-            code: res.__code_wrong,
-            msg: "不存在父部门！",
-          });
-          break;
-        default:
-          ctx.helper.body.INVALID_REQUEST({ ctx });
-          break;
-      }
-    }
+    ctx.validate(
+      ctx.rule.createDepartmentRequest,
+      ctx.helper.filterParam(ctx.request.body, ctx.rule.createDepartmentRequest)
+    );
+    await ctx.service.department
+      .create(ctx.request.body)
+      .then((res) => {
+        ctx.helper.body.CREATED_UPDATE({ ctx, res: res.id });
+      })
+      .catch((err) => {
+        ctx.helper.body.INVALID_REQUEST({ ctx, res: err.message });
+      });
   }
   /**
    * @summary 删除部门
    * @router delete /api/department/delete
    * @request body deleteDepartmentRequest *body
-   * @response 200 baseRequest 查询成功
+   * @response 200 baseResponse 查询成功
    *
    */
   async delete() {
     const { ctx } = this;
     ctx.validate(ctx.rule.deleteDepartmentRequest, ctx.request.body);
-    const res = await ctx.service.department.delete(ctx.request.body);
-    if (res.__code_wrong) {
-      ctx.helper.body.INVALID_REQUEST({
-        ctx,
+    const res = await ctx.service.department
+      .delete(ctx.request.body)
+      .then((res) => {
+        ctx.helper.body.NO_CONTENT({ ctx, res });
+      })
+      .catch((err) => {
+        ctx.helper.body.INVALID_REQUEST({
+          ctx,
+          res: err.message,
+        });
       });
-    } else {
-      ctx.helper.body.SUCCESS({ ctx });
-    }
   }
 }
 module.exports = DepartmentController;

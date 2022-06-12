@@ -59,3 +59,18 @@ module.exports.body = {
     };
   },
 };
+// 过滤参数
+module.exports.filterParam = (param, rule) => {
+  let filterParam = {};
+  for (const key in param) {
+    if (Object.hasOwnProperty.call(param, key)) {
+      const element = param[key];
+      const ruleItem = rule[key];
+      if (!(element !== 0 && !element && ruleItem.required === false)) {
+        filterParam[key] = element;
+      }
+    }
+  }
+  console.log(filterParam)
+  return filterParam;
+};
