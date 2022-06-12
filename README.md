@@ -358,76 +358,71 @@ module.exports = {
 ```
 // app/contract/response/user.js
 
-'use strict';
-const { baseResponse } = require('./base');
+"use strict";
+const { baseResponse } = require("./base");
 
 module.exports = {
   // 查询用户
   queryUserResponse: {
-    ...baseResponse('userPageList'),
+    ...baseResponse,
+    data: {
+      type: "userPageList",
+    },
   },
   // 用户分页
   userPageList: {
     total: {
-      type: 'number',
-      description: '总数',
+      type: "number",
+      description: "总数",
     },
     list: {
-      type: 'array',
-      itemType: 'user',
-      description: '记录',
+      type: "array",
+      itemType: "user",
+      description: "记录",
     },
   },
   // 用户数据模型
   user: {
     id: {
-      type: 'string',
-      description: '用户id',
+      type: "string",
+      description: "用户id",
     },
     userName: {
-      type: 'string',
-      description: '用户姓名',
+      type: "string",
+      description: "用户姓名",
     },
     phone: {
-      type: 'string',
-      description: '手机号',
+      type: "string",
+      description: "手机号",
     },
     email: {
-      type: 'string',
-      description: '邮箱',
+      type: "string",
+      description: "邮箱",
     },
     departmentName: {
-      type: 'string',
-      description: '部门名称',
+      type: "string",
+      description: "部门名称",
     },
   },
 };
-
-
 ```
 
 ```
 // app/contract/response/base.js
 
-'use strict';
+"use strict";
 module.exports = {
-  baseResponse: (dataType) => {
-    return {
-      code: {
-        type: 'number',
-        example: 200,
-      },
-      msg: {
-        type: 'string',
-        example: "成功",
-      },
-      data: {
-        type: dataType,
-      },
-    };
+  baseResponse: {
+    code: {
+      type: "number",
+      example: 200,
+    },
+    msg: {
+      type: "string",
+      example: "成功",
+    },
   },
 };
-
 ```
 
 ## 3.4 接口调试工具 [Apifox](https://www.apifox.cn/)
@@ -552,11 +547,9 @@ ctx.helper.body.SUCCESS({ ctx, res });
 
 ```
 // config/config.default.js
-config.exports = {
-  onerror: {
-    accepts: () => 'json',
-  },
-};
+  config.onerror = {
+    accepts: () => "json",
+  };
 ```
 
 框架并不会将服务端返回的 404 状态当做异常来处理，但是框架提供了当响应为 404 且没有返回 body 时的默认响应。
@@ -713,7 +706,7 @@ exports.sequelize = {
 ```
 // config/config.default
 
-exports.sequelize = {
+config.sequelize = {
   dialect: 'mysql',
   host: '127.0.0.1',
   port: 3306,
@@ -869,8 +862,8 @@ class UserService extends Service {
       offset: (currentPage - 1) * pageSize,
       where,
       include: {
-        model: ctx.model.Departments.name,
-        as: "departmentName",
+        model: ctx.model.Departments,
+        as: "department",
       },
       attributes: [
         "id",
