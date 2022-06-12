@@ -45,9 +45,9 @@ class DepartmentController extends Controller {
    */
   async delete() {
     const { ctx } = this;
-    ctx.validate(ctx.rule.deleteDepartmentRequest, ctx.request.body);
-    const res = await ctx.service.department
-      .delete(ctx.request.body)
+    ctx.validate(ctx.rule.deleteDepartmentRequest, ctx.query);
+    await ctx.service.department
+      .delete(ctx.query)
       .then((res) => {
         ctx.helper.body.NO_CONTENT({ ctx, res });
       })

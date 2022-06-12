@@ -27,6 +27,19 @@ module.exports = (appInfo) => {
     enable: true,
     routerMap: true,
   };
+  config.proxy = true;
+
+  config.bodyParser = {
+    jsonLimit: "10mb",
+    formLimit: "10mb",
+    enableTypes: ["json", "form", "text"],
+    extendTypes: {
+      json: "application/custom-json",
+      // json: 'application/json',
+      text: ["application/xml", "text/xml", "text/html"],
+    },
+  };
+
   config.onerror = {
     accepts: () => "json",
   };
@@ -48,7 +61,7 @@ module.exports = (appInfo) => {
     host: "127.0.0.1",
     password: "123456",
     port: 3306,
-    timezone: '+08:00',
+    timezone: "+08:00",
     database: "authority",
     define: {
       raw: true,

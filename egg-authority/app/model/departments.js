@@ -5,7 +5,14 @@ module.exports = (app) => {
   const department = app.model.define(
     "departments",
     {
-      id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+      id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+        get() {
+          return `${this.getDataValue("id")}`;
+        },
+      },
       name: Sequelize.STRING(60),
       parentId: Sequelize.INTEGER(11),
       sort: Sequelize.INTEGER(11),
@@ -20,7 +27,7 @@ module.exports = (app) => {
     department.hasMany(app.model.Departments, {
       foreignKey: "parentId",
       sourceKey: "id",
-      as: 'children'
+      as: "children",
     });
   };
   return department;

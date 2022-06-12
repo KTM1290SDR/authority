@@ -922,8 +922,8 @@ class DepartmentService extends Service {
             where: {
               id,
             },
+            transaction: t
           },
-          { transaction: t }
         );
         await ctx.model.Members.update(
           { departmentsId: 0 },
@@ -931,8 +931,8 @@ class DepartmentService extends Service {
             where: {
               departmentsId: id,
             },
+            transaction: t
           },
-          { transaction: t }
         );
         if (!delCount) {
           throw new Error("部门记录不存在!");
@@ -942,7 +942,7 @@ class DepartmentService extends Service {
     } catch (error) {
       // 如果执行到此,则发生错误.
       // 该事务已由 Sequelize 自动回滚！
-      return error;
+      throw error;
     }
   }
 }

@@ -11,7 +11,7 @@ module.exports.body = {
   // [POST/PUT/PATCH]：用户新建或修改数据成功。
   CREATED_UPDATE({ ctx, res = null, msg = "新建或修改数据成功" }) {
     ctx.body = {
-      code: 201,
+      code: 200,
       data: res,
       msg,
     };
@@ -21,7 +21,7 @@ module.exports.body = {
    */
   NO_CONTENT({ ctx, res = null, msg = "删除数据成功" }) {
     ctx.body = {
-      code: 204,
+      code: 200,
       data: res,
       msg,
     };
@@ -59,7 +59,12 @@ module.exports.body = {
     };
   },
 };
-// 过滤参数
+/**
+ * filterParam请求根据rule处理query值
+ * @param param 原请求参数
+ * @param rule 规则
+ * @return Object
+ */
 module.exports.filterParam = (param, rule) => {
   let filterParam = {};
   for (const key in param) {
@@ -71,6 +76,33 @@ module.exports.filterParam = (param, rule) => {
       }
     }
   }
-  console.log(filterParam)
+  console.log(filterParam);
   return filterParam;
+};
+/**
+ * filterWhere整理where条件
+ * @param param 参数
+ * @param where 条件
+ * @param whereMapParam 条件和参数映射
+ * @return Object
+ */
+module.exports.filterWhere = (param, where, whereMapParam) => {
+  console.log(where);
+  for (const key in whereMapParam) {
+    if (Object.hasOwnProperty.call(whereMapParam, key)) {
+      // 获取where需要的参数
+      const paramItem = param[whereMapParam[key]];
+      if (
+        Object.prototype.toString.call(whereMapParam[key]) === "[object Array]"
+      ) {
+        if (whereMapParam[key].some((item) => !param[item])) {
+          delete where[key];
+        }
+      } else if (paramItem !== 0 && !paramItem) {
+        delete where[key];
+      }
+    }
+  }
+  console.log("where", where);
+  return where;
 };

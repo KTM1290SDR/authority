@@ -5,7 +5,14 @@ module.exports = (app) => {
   const members = app.model.define(
     "members",
     {
-      id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+      id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+        get() {
+          return `${this.getDataValue("id")}`;
+        },
+      },
       departmentsId: { type: Sequelize.INTEGER },
       name: Sequelize.STRING(60),
       email: Sequelize.STRING(60),
@@ -26,7 +33,7 @@ module.exports = (app) => {
     members.hasOne(app.model.Departments, {
       foreignKey: "id",
       sourceKey: "departmentsId",
-      as: 'department'
+      as: "department",
     });
   };
   return members;

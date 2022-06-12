@@ -14,11 +14,11 @@ export const getMemberList = (params) => {
 }
 
 // 删除成员
-export const delMember = (params) => {
+export const delMember = (data) => {
   return request({
     url: `${serviceApi}/api/member/delete`,
     method: 'delete',
-    params
+    data
   })
 }
 

@@ -55,14 +55,12 @@ class DepartmentService extends Service {
     try {
       return await ctx.model.transaction(async (t) => {
         // 删除部门
-        const delCount = await ctx.model.Departments.destroy(
-          {
-            where: {
-              id,
-            },
+        const delCount = await ctx.model.Departments.destroy({
+          where: {
+            id,
           },
-          { transaction: t }
-        );
+          transaction: t,
+        });
         // 初始化本部门下成员的部门
         await ctx.model.Members.update(
           { departmentsId: 0 },
@@ -70,8 +68,8 @@ class DepartmentService extends Service {
             where: {
               departmentsId: id,
             },
-          },
-          { transaction: t }
+            transaction: t,
+          }
         );
         if (!delCount) {
           throw new Error("父部门不存在!");

@@ -30,7 +30,12 @@ module.exports = (option, app) => {
           error,
           detail: err.errors,
         };
-        ctx.helper.body.INVALID_REQUEST({ ctx, res, code: err.parent.errno });
+        ctx.helper.body.INVALID_REQUEST({
+          ctx,
+          res,
+          code: err.parent.errno,
+          msg: "mysql执行出错！",
+        });
       }
       if (status === 422) {
         ctx.helper.body.VALIDATION_FAILED({ ctx, res: err.errors });

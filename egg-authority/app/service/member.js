@@ -1,20 +1,24 @@
 const Service = require("egg").Service;
 const { Op } = require("sequelize");
+
 const moment = require("moment");
-class DepartmentService extends Service {
+class NemberService extends Service {
   async query(query) {
     const { ctx } = this;
     const {
       memberName,
       phoneNumber,
       email,
-      departmentsId,
+      departmentId,
       memberGroup,
       currentPage,
       pageSize,
+      createdDateStart,
+      createdDateEnd,
     } = query;
     // 成员分组
     const memberGroupList = {
+      "": {},
       // 全部
       1: {},
       // 新加入成员
@@ -29,28 +33,42 @@ class DepartmentService extends Service {
       4: { state: false },
     };
     let where = {
-      name: {
-        [Op.substring]: memberName,
-      },
-      email: {
-        [Op.substring]: email,
-      },
-      phone: {
-        [Op.substring]: phoneNumber,
-      },
-      createdAt: { [Op.between]: [createStartTime, createEndTime] },
-      departmentsId,
+      ...ctx.helper.filterWhere(
+        query,
+        {
+          name: {
+            [Op.substring]: memberName,
+          },
+          email: {
+            [Op.substring]: email,
+          },
+          phone: {
+            [Op.substring]: phoneNumber,
+          },
+          createdAt: { [Op.between]: [createdDateStart, createdDateEnd] },
+          departmentsId: departmentId,
+        },
+        {
+          name: "memberName",
+          email: "email",
+          phone: "phoneNumber",
+          createdAt: ["createdDateStart", "createdDateEnd"],
+          departmentsId: "departmentId",
+        }
+      ),
       ...memberGroupList[memberGroup],
     };
-    console.log(
-      where,
-      Object.keys(ctx.model.Members),
-      ctx.model.Members.getAttributes()
-    );
+
     const list = await ctx.model.Members.findAll({
-      limit: pageSize,
-      offset: (currentPage - 1) * pageSize,
+      limit: +pageSize,
+      offset: (+currentPage - 1) * +pageSize,
       where,
+      include: {
+        attributes: [["name", "departmentName"]],
+        model: ctx.model.Departments,
+        as: "department",
+      },
+      order: [["createdAt", "desc"]],
       attributes: [
         ["id", "memberId"],
         ["name", "memberName"],
@@ -58,7 +76,7 @@ class DepartmentService extends Service {
         "email",
         "state",
         ["createdAt", "inductionDate"],
-        ["departmentsId", "department"],
+        ["departmentsId", "departmentId"],
       ],
     });
     const total = await ctx.model.Members.count({ where });
@@ -121,16 +139,14 @@ class DepartmentService extends Service {
     const { ids } = body;
     try {
       return await ctx.model.transaction(async (t) => {
-        const delCount = await ctx.model.Members.destroy(
-          {
-            where: {
-              id: {
-                [Op.or]: ids,
-              },
+        const delCount = await ctx.model.Members.destroy({
+          where: {
+            id: {
+              [Op.or]: ids,
             },
           },
-          { transaction: t }
-        );
+          transaction: t,
+        });
         if (delCount !== ids.length) {
           throw new Error("部分删除失败！");
         }
@@ -157,8 +173,8 @@ class DepartmentService extends Service {
               where: {
                 id,
               },
-            },
-            { transaction: t }
+              transaction: t,
+            }
           );
           if (!updateCount[0]) {
             throw new Error("更新的成员不存在！");
@@ -185,10 +201,9 @@ class DepartmentService extends Service {
                 [Op.or]: ids,
               },
             },
-          },
-          { transaction: t }
+            transaction: t,
+          }
         );
-        console.log(updateCount);
         if (updateCount[0] !== ids.length) {
           throw new Error("部分成员更新失败！");
         }
@@ -197,6 +212,7 @@ class DepartmentService extends Service {
       throw error;
     }
   }
+
   // 更新成员的部门
   async updateDepartment(body) {
     const { ctx } = this;
@@ -212,8 +228,8 @@ class DepartmentService extends Service {
                   [Op.or]: membeIds,
                 },
               },
-            },
-            { transaction: t }
+              transaction: t,
+            }
           );
           if (updateCount[0] !== membeIds.length) {
             throw new Error("部分成员更新失败！");
@@ -227,4 +243,4 @@ class DepartmentService extends Service {
     }
   }
 }
-module.exports = DepartmentService;
+module.exports = NemberService;
