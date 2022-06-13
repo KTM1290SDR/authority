@@ -135,14 +135,12 @@ egg-project
 module.exports = (app) => {
   const { router, controller } = app;
   // 用户
-  router.get("/api/user/query", controller.user.query); // 查询用户
-  router.post("/api/user/create", controller.user.create);  // 新增用户
-  router.put("/api/user/update", controller.user.update); // 修改用户
-  router.delete("/api/user/delete", controller.user.delete); // 删除用户
+  router.post('/api/user/create', controller.user.create); // 新增用户
+  router.get('/api/user/query', controller.user.query); // 查询用户
   // 部门
-  router.get("/api/department/query", controller.department.query); // 查询部门
-  router.post("/api/department/create", controller.department.create);  // 新增部门
-  router.delete("/api/department/delete", controller.department.delete);  // 删除部门
+  router.post('/api/department/create', controller.department.create); // 新增部门
+  router.get('/api/department/query', controller.department.query); // 查询部门
+  router.delete('/api/department  /delete', controller.department.delete); // 删除部门
 };
 ```
 
@@ -277,6 +275,8 @@ class UserController extends Controller {
    * @request query string phone 手机号
    * @request query string departmentId 部门id
    * @request query string email 邮箱
+   * @request query string createStartTime 创建开始时间
+   * @request query string createEndTime 创建结束时间
    * @request query number *currentPage 当前页
    * @request query number *pageSize 当前页条数
    * @response 200 queryUserResponse 查询成功
@@ -286,6 +286,24 @@ class UserController extends Controller {
     ctx.validate(ctx.rule.queryUserRequest, ctx.query);
     const res = await ctx.service.user.query(ctx.query);
     ctx.helper.body.SUCCESS({ ctx, res });
+  }
+  /**
+   * @summary 新增用户  
+   * @router post /api/user/create
+   * @request body createUserRequest *body
+   * @response 200 baseResponse 新增成功
+   */
+  async create() {
+    const { ctx } = this;
+    ctx.validate(ctx.rule.createUserRequest, ctx.request.body);
+    await ctx.service.user
+      .create(ctx.request.body)
+      .then((res) => {
+        ctx.helper.body.CREATED_UPDATE({ ctx, res, msg: '新增用户成功！' });
+      })
+      .catch((err) => {
+        ctx.helper.body.INVALID_REQUEST({ ctx, res: err.message });
+      });
   }
 }
 module.exports = UserController;
@@ -360,6 +378,7 @@ module.exports = {
 
 "use strict";
 const { baseResponse } = require("./base");
+const { department } = require('./department');
 
 module.exports = {
   // 查询用户
@@ -399,11 +418,12 @@ module.exports = {
       type: "string",
       description: "邮箱",
     },
-    departmentName: {
-      type: "string",
-      description: "部门名称",
+    department: {
+      type: 'department',
+      description: '部门',
     },
   },
+  department
 };
 ```
 
@@ -821,13 +841,69 @@ class DepartmentService extends Service {
   async create(body) {
     const { ctx } = this;
     const { departmentName } = body;
-    const newDepartments = await ctx.model.Departments.create({
-      name: departmentName,
+    try {
+      return await ctx.model.transaction(async (t) => {
+        return await ctx.model.Departments.create(
+          {
+            name: departmentName,
+          },
+          { transaction: t }
+        );
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+module.exports = DepartmentService;
+```
+
+
+- 查询部门
+
+```
+// app/service/department.js
+
+const Service = require("egg").Service;
+class DepartmentService extends Service {
+  async query() {
+    const { ctx } = this;
+    return await ctx.model.Departments.findAll({
+      attributes: ['id', ['name', 'departmentName']],
     });
-    return newDepartments.id;
   }
 }
-module.exports = DepartmentService;
+```
+- 新增用户
+
+```
+// app/service/user.js
+
+const Service = require("egg").Service;
+class UserService extends Service {
+  async create(body) {
+    const { ctx } = this;
+    const { userName, phone, email, departmentId } = body;
+    try {
+      if (!(await ctx.model.Departments.findByPk(departmentId))) {
+        throw new Error('部门不存在！');
+      }
+      return await ctx.model.transaction(async (t) => {
+        const user = await ctx.model.User.create(
+          {
+            departmentId,
+            name: userName,
+            email: email,
+            phone,
+          },
+          { transaction: t }
+        );
+        return user.id;
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+}
 ```
 
 - 查询用户
@@ -905,36 +981,34 @@ module.exports = UserService;
 const Service = require("egg").Service;
 
 class DepartmentService extends Service {
-  async delete(body) {
+  async delete(query) {
     const { ctx } = this;
-    const { id } = body;
+    const { id } = query;
     try {
       return await ctx.model.transaction(async (t) => {
-        const delCount = await ctx.model.Departments.destroy(
-          {
-            where: {
-              id,
-            },
-            transaction: t
+        const delCount = await ctx.model.Departments.destroy({
+          where: {
+            id,
           },
-        );
+          transaction: t,
+        });
+        // 初始化本部门下成员的部门
         await ctx.model.Members.update(
-          { departmentsId: 0 },
+          { departmentId: 1000000 },
           {
             where: {
-              departmentsId: id,
+              departmentId: id,
             },
-            transaction: t
-          },
+            transaction: t,
+          }
         );
         if (!delCount) {
-          throw new Error("部门记录不存在!");
+          throw new Error('部门不存在!');
+        } else {
+          return delCount;
         }
-        // 如果执行到此行,则表示事务已成功提交
       });
     } catch (error) {
-      // 如果执行到此,则发生错误.
-      // 该事务已由 Sequelize 自动回滚！
       throw error;
     }
   }
@@ -942,11 +1016,7 @@ class DepartmentService extends Service {
 module.exports = DepartmentService;
 ```
 
-# 6.[Demo](https://github.com/KTM1290SDR/authority)
-
-一般后台管理系统表格业务 demo
-
-# 7.开源项目 beehive
+# 6.开源项目 beehive
 
 - 介绍
 
